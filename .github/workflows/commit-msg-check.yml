@@ -1,0 +1,20 @@
+name: Check Commit Messages
+
+on:
+  push:
+    branches:
+      - '*'
+
+jobs:
+  check-commit-message:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Check commit message format
+        uses: peter-evans/commit-message-check@v2
+        with:
+          allowed-pattern: '^(feat|fix|docs|style|refactor|test|chore)\(.+\): .+'
+          error-message: 'Commit message does not follow the Conventional Commits standard.'
