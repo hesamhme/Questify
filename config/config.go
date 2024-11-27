@@ -2,6 +2,7 @@ package config
 
 type Config struct {
 	DB DatabaseConfig `yaml:"db"`
+	JWT JWTConfig      `yaml:"jwt"`
 }
 
 type DatabaseConfig struct {
@@ -10,4 +11,8 @@ type DatabaseConfig struct {
 	Host   string `yaml:"host"`
 	Port   int    `yaml:"port"`
 	DBName string `yaml:"db_name"`
+}
+
+type JWTConfig struct {
+	Secret string `yaml:"secret"`
 }

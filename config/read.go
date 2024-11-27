@@ -21,5 +21,8 @@ func ReadConfig() (*Config, error) {
 		return nil, fmt.Errorf("failed to decode config.yaml: %w", err)
 	}
 
+	// Debug: Print the loaded config
+	fmt.Printf("Loaded config: %+v\n", cfg)
+
 	return &cfg, nil
 }
