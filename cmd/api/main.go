@@ -5,6 +5,7 @@ import (
 
 	"Questify/api/http"
 	"Questify/config"
+	"Questify/service"
 	"Questify/pkg/adapters/storage"
 	"github.com/gofiber/fiber/v2"
 )
@@ -20,6 +21,9 @@ func main() {
 	storage.SetupDatabase(&cfg.DB)
 	// yadam bashe ino badan pak konm ...
 	log.Println("Server is running... (database initialized)")
+
+	// Initialize services
+	service.InitializeServices(cfg)
 
 	// Initialize Fiber
 	app := fiber.New()

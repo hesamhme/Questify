@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// Signup handles the user registration process
+// Signup handles user registration
 func Signup(c *fiber.Ctx) error {
 	var input service.UserInput
 
@@ -17,16 +17,13 @@ func Signup(c *fiber.Ctx) error {
 		})
 	}
 
-	// Call the UserService to handle business logic
-	err := service.UserService.Signup(input)
+	// Call the service layer for business logic
+	response, err := service.UserService.Signup(input)
 	if err != nil {
-		// Handle specific errors (e.g., duplicate or invalid NID)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"message": "User registered successfully",
-	})
+	return c.Status(fiber.StatusCreated).JSON(response)
 }
