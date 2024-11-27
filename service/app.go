@@ -83,6 +83,27 @@ func (s *userService) Signup(input UserInput) (*SignupResponse, error) {
 	}, nil
 }
 
+func (s *userService) Login(email, password string) (string, error) {
+	// Find the user by email
+	var user entities.User
+	if err := storage.DB.Where("email = ?", email).First(&user).Error; err != nil {
+		return "", errors.New("invalid email or password")
+	}
+
+	// Compare the provided password with the stored hash
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
+		return "", errors.New("invalid email or password")
+	}
+
+	// Generate a JWT token
+	token, err := jwt.GenerateJWT(user.ID.String(), appConfig.JWT.Secret)
+	if err != nil {
+		return "", errors.New("failed to generate JWT")
+	}
+
+	return token, nil
+}
+
 // hashPassword hashes the user's password using bcrypt
 func hashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)

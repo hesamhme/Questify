@@ -5,8 +5,8 @@ import (
 
 	"Questify/api/http"
 	"Questify/config"
-	"Questify/service"
 	"Questify/pkg/adapters/storage"
+	"Questify/service"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -19,8 +19,6 @@ func main() {
 
 	// Setup database
 	storage.SetupDatabase(&cfg.DB)
-	// yadam bashe ino badan pak konm ...
-	log.Println("Server is running... (database initialized)")
 
 	// Initialize services
 	service.InitializeServices(cfg)
@@ -28,10 +26,9 @@ func main() {
 	// Initialize Fiber
 	app := fiber.New()
 
-	// Setup HTTP routes
-	http.SetupHTTP(app)
+	// Setup HTTP routes with the JWT secret key
+	http.SetupHTTP(app, cfg.JWT.Secret)
 
 	// Start server
 	log.Fatal(app.Listen(":3000"))
-
 }
