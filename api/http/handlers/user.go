@@ -5,7 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// SignupHandler handles user registration.
+// SignupHandler handles user signup requests.
 func SignupHandler(authService *service.AuthService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var req struct {
@@ -13,18 +13,29 @@ func SignupHandler(authService *service.AuthService) fiber.Handler {
 			Password string `json:"password"`
 			NID      string `json:"nid"`
 		}
+
+		// Parse and validate the request body
 		if err := c.BodyParser(&req); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request"})
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Invalid request body",
+			})
 		}
 
+		// Call the signup logic
 		token, err := authService.SignUp(req.Email, req.Password, req.NID)
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+				"error": err.Error(),
+			})
 		}
 
-		return c.Status(fiber.StatusCreated).JSON(fiber.Map{"token": token})
+		// Return the token
+		return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+			"token": token,
+		})
 	}
 }
+
 
 func LoginHandler(authService *service.AuthService) fiber.Handler {
 	return func(c *fiber.Ctx) error {

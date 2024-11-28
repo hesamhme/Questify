@@ -10,25 +10,31 @@ import (
 )
 
 func main() {
-	// Load Configuration
+	// Read configuration
 	cfg, err := config.ReadConfig()
 	if err != nil {
-		log.Fatalf("Error loading configuration: %v", err)
+		log.Fatalf("Error reading configuration: %v", err)
 	}
 
-	// Initialize AppContainer
+	// Initialize app container
 	appContainer, err := service.NewAppContainer(cfg)
 	if err != nil {
-		log.Fatalf("Error initializing services: %v", err)
+		log.Fatalf("Error initializing app container: %v", err)
 	}
+	defer func() {
+		sqlDB, _ := appContainer.DB.DB()
+		sqlDB.Close()
+	}()
 
-	// Initialize Fiber
+	// Initialize Fiber app
 	app := fiber.New()
 
-	// Setup Routes
-	http.SetupHTTP(app, cfg.JWT.Secret, appContainer.AuthService)
+	// Setup HTTP routes with dependencies from the app container
+	http.SetupHTTP(app, cfg.JWT.Secret, appContainer)
 
-	// Start Server
+	// Start the Fiber server
 	log.Println("Starting server on port 3000...")
-	log.Fatal(app.Listen(":3000"))
+	if err := app.Listen(":3000"); err != nil {
+		log.Fatalf("Error starting server: %v", err)
+	}
 }

@@ -1,31 +1,40 @@
 package service
 
 import (
+	"log"
+
 	"Questify/config"
 	"Questify/pkg/adapters/storage"
 	"gorm.io/gorm"
 )
 
-// AppContainer holds all initialized services and shared dependencies.
+// AppContainer holds shared dependencies for the application.
 type AppContainer struct {
 	DB          *gorm.DB
 	AuthService *AuthService
+	UserService *UserService
 }
 
-// NewAppContainer initializes the application container with all services.
+// NewAppContainer initializes the container with all shared dependencies.
 func NewAppContainer(cfg *config.Config) (*AppContainer, error) {
-	// Step 1: Setup Database
-	db, err := storage.SetupDatabase(cfg.DB)
+	// Setup database
+	db, err := storage.SetupDatabase(&cfg.DB)
 	if err != nil {
 		return nil, err
 	}
 
-	// Step 2: Initialize Services
-	authService := NewAuthService(db, cfg.JWT.Secret)
+	// Initialize repositories
+	userRepo := &storage.UserRepository{DB: db}
 
-	// Step 3: Return the AppContainer
+	// Initialize services
+	authService := NewAuthService(db, cfg.JWT.Secret)
+	userService := NewUserService(userRepo)
+
+	// Log success and return the container
+	log.Println("App container initialized successfully.")
 	return &AppContainer{
 		DB:          db,
 		AuthService: authService,
+		UserService: userService,
 	}, nil
 }
