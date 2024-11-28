@@ -2,63 +2,69 @@ package handlers
 
 import (
 	"Questify/service"
-
 	"github.com/gofiber/fiber/v2"
 )
 
-// Signup handles user registration
-func Signup(c *fiber.Ctx) error {
-	var input service.UserInput
+// SignupHandler handles user registration.
+func SignupHandler(authService *service.AuthService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var req struct {
+			Email    string `json:"email"`
+			Password string `json:"password"`
+			NID      string `json:"nid"`
+		}
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request"})
+		}
 
-	// Parse JSON input
-	if err := c.BodyParser(&input); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid input format",
-		})
+		token, err := authService.SignUp(req.Email, req.Password, req.NID)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		}
+
+		return c.Status(fiber.StatusCreated).JSON(fiber.Map{"token": token})
 	}
-
-	// Call the service layer for business logic
-	response, err := service.UserService.Signup(input)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-
-	// Return the signup response with a sign-in message
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"message":       "You have successfully signed up and are now signed in.",
-		"token":         response.Token,
-		"email":         response.Email,
-		"national_code": response.NationalCode,
-	})
 }
 
-// Signin handles user login
-func Signin(c *fiber.Ctx) error {
-	var input struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}
+func LoginHandler(authService *service.AuthService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var req struct {
+			Email    string `json:"email"`
+			Password string `json:"password"`
+		}
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request"})
+		}
 
-	// Parse JSON input
-	if err := c.BodyParser(&input); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid input format",
-		})
-	}
+		token, err := authService.SignIn(req.Email, req.Password)
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": err.Error()})
+		}
 
-	// Call the service layer for authentication
-	token, err := service.UserService.Login(input.Email, input.Password)
-	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{"token": token})
 	}
+}
 
-	// Return the generated JWT token
-	return c.JSON(fiber.Map{
-		"message": "You are successfully signed in.",
-		"token":   token,
-	})
+
+// UserProfileHandler fetches the profile of the authenticated user.
+func UserProfileHandler(userService *service.UserService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		// Retrieve the user ID from the context
+		userID, exists := c.Locals("userID").(string)
+		if !exists {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "User not authenticated",
+			})
+		}
+
+		// Fetch the user details
+		user, err := userService.GetUserByID(userID)
+		if err != nil {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "User not found",
+			})
+		}
+
+		return c.JSON(user)
+	}
 }

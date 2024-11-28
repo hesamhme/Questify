@@ -1,20 +1,77 @@
 package service
 
-// isValidIranianNationalCode validates an Iranian national ID
-func IsValidIranianNationalCode(input string) bool {
-	if len(input) != 10 {
-		return false
+import (
+	"Questify/internal/user"
+	"Questify/pkg/adapters/storage"
+	"Questify/pkg/jwt"
+	"errors"
+	"gorm.io/gorm"
+	"golang.org/x/crypto/bcrypt"
+)
+
+
+
+// AuthService handles authentication-related logic.
+type AuthService struct {
+	UserRepo *storage.UserRepository
+	JWTSecret string
+}
+
+// NewAuthService initializes the AuthService with dependencies.
+func NewAuthService(db *gorm.DB, jwtSecret string) *AuthService {
+	return &AuthService{
+		UserRepo:  &storage.UserRepository{DB: db},
+		JWTSecret: jwtSecret,
 	}
-	for i := 0; i < 10; i++ {
-		if input[i] < '0' || input[i] > '9' {
-			return false
-		}
+}
+
+// SignUp creates a new user and returns a JWT token.
+func (s *AuthService) SignUp(email, password, nid string) (string, error) {
+	// Hash the password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", errors.New("failed to hash password")
 	}
-	check := int(input[9] - '0')
-	sum := 0
-	for i := 0; i < 9; i++ {
-		sum += int(input[i]-'0') * (10 - i)
+
+	// Create the user
+	newUser := &user.User{
+		Email:    email,
+		Password: string(hashedPassword),
+		NID:      nid,
 	}
-	sum %= 11
-	return (sum < 2 && check == sum) || (sum >= 2 && check+sum == 11)
+
+	createdUser, err := s.UserRepo.CreateUser(newUser)
+	if err != nil {
+		return "", err
+	}
+
+	// Generate a JWT
+	token, err := jwt.GenerateToken(createdUser.ID, s.JWTSecret, jwt.DefaultExpiry)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
+}
+
+// SignIn authenticates a user and returns a JWT token.
+func (s *AuthService) SignIn(email, password string) (string, error) {
+	// Fetch the user by email
+	existingUser, err := s.UserRepo.GetUserByEmail(email)
+	if err != nil {
+		return "", errors.New("invalid credentials")
+	}
+
+	// Compare the hashed password
+	if err := bcrypt.CompareHashAndPassword([]byte(existingUser.Password), []byte(password)); err != nil {
+		return "", errors.New("invalid credentials")
+	}
+
+	// Generate a JWT
+	token, err := jwt.GenerateToken(existingUser.ID, s.JWTSecret, jwt.DefaultExpiry)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
 }

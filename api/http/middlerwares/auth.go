@@ -2,34 +2,32 @@ package middlerwares
 
 import (
 	"Questify/pkg/jwt"
-
 	"github.com/gofiber/fiber/v2"
 )
 
-// AuthMiddleware validates JWT tokens
-func AuthMiddleware(secretKey string) fiber.Handler {
+// AuthMiddleware validates the JWT token and sets user context.
+func AuthMiddleware(secret string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		// Extract the Authorization header
-		authHeader := c.Get("Authorization")
-		if authHeader == "" || len(authHeader) <= 7 || authHeader[:7] != "Bearer " {
+		// Extract token from Authorization header
+		token := c.Get("Authorization")
+		if token == "" {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Missing or invalid Authorization header",
+				"success": false,
+				"message": "Missing Authorization header",
 			})
 		}
 
-		// Extract the token
-		token := authHeader[7:]
-
-		// Validate the token
-		claims, err := jwt.ValidateJWT(token, secretKey)
+		// Parse and validate JWT
+		claims, err := jwt.ParseToken(token, secret)
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Invalid or expired token",
+				"success": false,
+				"message": "Invalid token",
 			})
 		}
 
-		// Add user data to the context
-		c.Locals("user_id", claims["user_id"])
+		// Set user ID in context for downstream handlers
+		c.Locals("userID", claims.UserID)
 		return c.Next()
 	}
 }

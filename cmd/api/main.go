@@ -5,30 +5,30 @@ import (
 
 	"Questify/api/http"
 	"Questify/config"
-	"Questify/pkg/adapters/storage"
 	"Questify/service"
 	"github.com/gofiber/fiber/v2"
 )
 
 func main() {
-	// Read configuration
+	// Load Configuration
 	cfg, err := config.ReadConfig()
 	if err != nil {
-		log.Fatalf("Error reading config: %v", err)
+		log.Fatalf("Error loading configuration: %v", err)
 	}
 
-	// Setup database
-	storage.SetupDatabase(&cfg.DB)
-
-	// Initialize services
-	service.InitializeServices(cfg)
+	// Initialize AppContainer
+	appContainer, err := service.NewAppContainer(cfg)
+	if err != nil {
+		log.Fatalf("Error initializing services: %v", err)
+	}
 
 	// Initialize Fiber
 	app := fiber.New()
 
-	// Setup HTTP routes with the JWT secret key
-	http.SetupHTTP(app, cfg.JWT.Secret)
+	// Setup Routes
+	http.SetupHTTP(app, cfg.JWT.Secret, appContainer.AuthService)
 
-	// Start server
+	// Start Server
+	log.Println("Starting server on port 3000...")
 	log.Fatal(app.Listen(":3000"))
 }

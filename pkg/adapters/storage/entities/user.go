@@ -1,17 +1,16 @@
 package entities
 
 import (
-	"time"
-
 	"github.com/google/uuid"
+	"time"
 )
 
-
+// User represents the user entity in the database.
 type User struct {
-	ID           uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"` // UUID as primary key
-	Email        string    `gorm:"size:100;unique;not null"`                        // UNIQUE, NOT NULL
-	Password     string    `gorm:"size:100;not null"`                               // Password (hashed)
-	NationalCode string    `gorm:"type:char(10);unique;not null"`                   // CHAR(10), UNIQUE, NOT NULL
-	CreatedAt    time.Time `gorm:"autoCreateTime"`                                  // Auto set creation time
-	UpdatedAt    time.Time `gorm:"autoUpdateTime"`                                  // Auto set update time
+	ID        uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
+	Email     string    `gorm:"unique;not null"`
+	Password  string    `gorm:"not null"`
+	NID       string    `gorm:"unique;not null"`
+	CreatedAt time.Time `gorm:"autoCreateTime"`
+	UpdatedAt time.Time `gorm:"autoUpdateTime"`
 }

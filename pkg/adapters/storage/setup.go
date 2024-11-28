@@ -1,44 +1,71 @@
+// package storage
+
+// import (
+
+// 	"gorm.io/driver/postgres"
+// 	"gorm.io/gorm"
+// 	"Questify/config"
+// )
+
+// // SetupDatabase initializes the database connection.
+// func SetupDatabase(cfg config.DatabaseConfig) (*gorm.DB, error) {
+// 	// Build the DSN (Data Source Name)
+// 	dsn := "host=" + cfg.Host + " port=" + string(cfg.Port) + " user=" + cfg.User +
+// 		" password=" + cfg.Pass + " dbname=" + cfg.DBName + " sslmode=disable"
+
+// 	// Open the database connection
+// 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	// Ensure UUID extension is enabled
+// 	sqlDB, err := db.DB() // Get the native *sql.DB object
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	if _, err := sqlDB.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\""); err != nil {
+// 		log.Fatalf("Failed to enable uuid-ossp extension: %v", err)
+// 	}
+
+// 	log.Println("Database connection established and uuid-ossp extension enabled.")
+// 	return db, nil
+// }
+
+
 package storage
 
 import (
-	"fmt"
 	"log"
-
+	"fmt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
-	"Questify/config" 
-	"Questify/pkg/adapters/storage/entities"
+	"Questify/config"
 )
 
-var DB *gorm.DB
+// SetupDatabase initializes the database connection.
+func SetupDatabase(cfg config.DatabaseConfig) (*gorm.DB, error) {
+	// Safely format the port as a string
+	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		cfg.Host, cfg.Port, cfg.User, cfg.Pass, cfg.DBName)
 
-// SetupDatabase initializes the database connection and performs migrations
-func SetupDatabase(cfg *config.DatabaseConfig) {
-	dsn := fmt.Sprintf(
-		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		cfg.Host, cfg.Port, cfg.User, cfg.Pass, cfg.DBName,
-	)
-
-	var err error
-	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
-	})
+	// Open the database connection
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		return nil, fmt.Errorf("failed to initialize database: %w", err)
 	}
 
-	log.Println("Database connection established.")
-
 	// Ensure UUID extension is enabled
-	if err := DB.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"").Error; err != nil {
+	sqlDB, err := db.DB() // Get the native *sql.DB object
+	if err != nil {
+		return nil, err
+	}
+	if _, err := sqlDB.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\""); err != nil {
 		log.Fatalf("Failed to enable uuid-ossp extension: %v", err)
 	}
 
-	// Run migrations
-	if err := DB.AutoMigrate(&entities.User{}); err != nil {
-		log.Fatalf("Failed to run migrations: %v", err)
-	}
+	log.Println("Database connection established and uuid-ossp extension enabled.")
+	return db, nil
 
-	log.Println("Database setup completed successfully.")
+	return db, nil
 }
