@@ -1,53 +1,56 @@
-package middlerwares
+package middlewares
 
 import (
-	"log/slog"
-	"os"
-	"github.com/hesamhme/Qustify/pkg/valuecontext"
+	"errors"
+	"Questify/api/http/handlers"
+	"Questify/pkg/jwt"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func SetUserContext() fiber.Handler {
+func Auth(secret []byte) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		ctxValue := &valuecontext.ContextValue{
-			Logger: slog.New(slog.NewJSONHandler(os.Stdout, nil)),
+		authorization := c.Get("Authorization")
+
+		if authorization == "" {
+			return handlers.SendError(c, errors.New("authorization header missing"), fiber.StatusUnauthorized)
 		}
 
-		c.SetUserContext(valuecontext.NewValueContext(c.UserContext(), ctxValue))
+		// Split the Authorization header value
+		parts := strings.Split(authorization, " ")
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			return handlers.SendError(c, errors.New("invalid authorization token format"), fiber.StatusUnauthorized)
+		}
+
+		//pureToken := parts[1]
+		pureToken := parts[1]
+		claims, err := jwt.ParseToken(pureToken, secret)
+		if err != nil {
+			return handlers.SendError(c, err, fiber.StatusUnauthorized)
+		}
+
+		c.Locals(jwt.UserClaimKey, claims)
 
 		return c.Next()
 	}
 }
 
-func SetTransaction(committer valuecontext.Committer) fiber.Handler {
+func RoleChecker(roles ...string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		cm := committer.Begin()
-		valuecontext.SetTx(c.UserContext(), cm)
-
-		logger := valuecontext.GetLogger(c.UserContext())
-
-		logger.Info("starting transaction")
-		if err := c.Next(); err != nil {
-			logger.Info("rollback on error", "error", err.Error())
-			cm.Rollback()
-			return err
+		claims := c.Locals(jwt.UserClaimKey).(*jwt.UserClaims)
+		hasAccess := false
+		for _, role := range roles {
+			if claims.Role == role {
+				hasAccess = true
+				break
+			}
 		}
 
-		err, ok := c.Locals(valuecontext.IsTxError).(error)
-		if ok && err != nil {
-			logger.Info("rollback on not ok response", "error", err.Error())
-			cm.Rollback()
-			return nil
+		if !hasAccess {
+			return handlers.SendError(c, errors.New("you don't have access to this section"), fiber.StatusForbidden)
 		}
 
-		if err := cm.Commit(); err != nil {
-			logger.Info("commit error", "err", err.Error())
-			cm.Rollback()
-			return err
-		}
-
-		logger.Info("ending transaction")
-		return nil
+		return c.Next()
 	}
 }

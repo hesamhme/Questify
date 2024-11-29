@@ -1,12 +1,10 @@
-
 package presenter
 
 import (
-	"github.com/go-playground/validator/v10"
 	"math"
-	"time"
-)
 
+	"github.com/go-playground/validator/v10"
+)
 
 type PaginationResponse[T any] struct {
 	Page       uint `json:"page"`

@@ -2,8 +2,8 @@ package service
 
 import (
 	"context"
-	"github.com/hesamhme/Qustify/internal/user"
-	"github.com/hesamhme/Qustify/pkg/jwt"
+	"Questify/internal/user"
+	"Questify/pkg/jwt"
 	"time"
 
 	jwt2 "github.com/golang-jwt/jwt/v5"
@@ -32,7 +32,7 @@ type UserToken struct {
 	ExpiresAt          int64
 }
 
-func (s *AuthService) CreateUser(ctx context.Context, user *user.User) (*user.User, error) {
+func (s *AuthService) CreateUser(ctx context.Context, user *user.User) (error) {
 	return s.userOps.Create(ctx, user)
 }
 
@@ -105,6 +105,6 @@ func (s *AuthService) userClaims(user *user.User, exp time.Time) *jwt.UserClaims
 			},
 		},
 		UserID: user.ID,
-		Role:   user.Role.String(),
+		Role:   user.Role,
 	}
 }

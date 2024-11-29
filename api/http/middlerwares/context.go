@@ -1,9 +1,9 @@
-package middlerwares
+package middlewares
 
 import (
+	"Questify/pkg/valuecontext"
 	"log/slog"
 	"os"
-	"github.com/hesamhme/Qustify/pkg/valuecontext"
 
 	"github.com/gofiber/fiber/v2"
 )

@@ -1,14 +1,14 @@
 package storage
 
 import (
+	"Questify/internal/user"
+	"Questify/pkg/adapters/storage/entities"
+	"Questify/pkg/adapters/storage/mappers"
 	"context"
 	"errors"
-	"github.com/google/uuid"
-	"github.com/hesamhme/Qustify/internal/user"
-	"github.com/hesamhme/Qustify/pkg/adapters/storage/entities"
-	"github.com/hesamhme/Qustify/pkg/adapters/storage/mappers"
-	"github.com/hesamhme/Qustify/pkg/utils"
 	"strings"
+
+	"github.com/google/uuid"
 
 	"gorm.io/gorm"
 )
@@ -23,14 +23,14 @@ func NewUserRepo(db *gorm.DB) user.Repo {
 	}
 }
 
-func (r *userRepo) Create(ctx context.Context, user *user.User) (error) {
+func (r *userRepo) Create(ctx context.Context, user *user.User) error {
 	newUser := mappers.UserDomainToEntity(user)
 	err := r.db.WithContext(ctx).Create(&newUser).Error
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
 			return nil
 		}
-		return  err
+		return err
 	}
 	user.ID = newUser.ID
 	return nil
@@ -46,7 +46,8 @@ func (r *userRepo) GetByID(ctx context.Context, id uuid.UUID) (*user.User, error
 		}
 		return nil, err
 	}
-	return mappers.UserEntityToDomain(&u), nil
+	uu := mappers.UserEntityToDomain(u)
+	return &uu, nil
 }
 
 func (r *userRepo) GetByEmail(ctx context.Context, email string) (*user.User, error) {
@@ -58,5 +59,7 @@ func (r *userRepo) GetByEmail(ctx context.Context, email string) (*user.User, er
 		}
 		return nil, err
 	}
-	return mappers.UserEntityToDomain(&user), nil
+	uu:= mappers.UserEntityToDomain(user)
+	return &uu, nil
+
 }

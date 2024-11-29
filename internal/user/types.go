@@ -27,4 +27,5 @@ type User struct {
 	Email        string
 	Password     string
 	NationalCode string
+	Role string
 }

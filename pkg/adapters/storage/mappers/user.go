@@ -1,12 +1,12 @@
 package mappers
 
 import (
-	"github.com/hesamhme/Questify/internal/user"
-	"github.com/hesamhme/Questify/pkg/adapters/storage/entities"
-	"github.com/hesamhme/Questify/pkg/fp"
+	"Questify/internal/user"
+	"Questify/pkg/adapters/storage/entities"
+	"Questify/pkg/fp"
 )
 
-func UserEntityToDomain(entity entities.User) user.User{
+func UserEntityToDomain(entity entities.User) user.User {
 	return user.User{
 		ID:           entity.ID,
 		Email:        entity.Email,
@@ -15,7 +15,6 @@ func UserEntityToDomain(entity entities.User) user.User{
 	}
 }
 
-
 func BatchUserEntityToDomain(entities []entities.User) []user.User {
 	return fp.Map(entities, UserEntityToDomain)
 }
@@ -23,7 +22,7 @@ func BatchUserEntityToDomain(entities []entities.User) []user.User {
 func UserDomainToEntity(domainUser *user.User) *entities.User {
 	return &entities.User{
 		Email:        domainUser.Email,
-		Password:      domainUser.Password,
-		NationalCode:  domainUser.NationalCode,
+		Password:     domainUser.Password,
+		NationalCode: domainUser.NationalCode,
 	}
 }

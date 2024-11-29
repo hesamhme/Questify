@@ -5,7 +5,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/hesamhme/Questify/config"
+	http_server"Questify/api/http"
+	"Questify/config"
+	"Questify/service"
 )
 
 var configPath = flag.String("config", "", "configuration path")

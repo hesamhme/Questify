@@ -1,7 +1,8 @@
 package adapters
 
 import (
-	"github.com/hesamhme/Questify/pkg/valuecontext"
+	"Questify/pkg/valuecontext"
+
 	"gorm.io/gorm"
 )
 

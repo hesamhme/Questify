@@ -4,10 +4,11 @@ import (
 	"context"
 	"log"
 
-	"github.com/hesamhme/Questify/config"
-	"github.com/hesamhme/Questify/internal/user"
-	"github.com/hesamhme/Questify/pkg/adapters/storage"
-	"github.com/hesamhme/Questify/pkg/valuecontext"
+	"Questify/config"
+	"Questify/internal/user"
+	"Questify/pkg/adapters/storage"
+	"Questify/pkg/valuecontext"
+
 	"gorm.io/gorm"
 )
 
@@ -74,12 +75,22 @@ func (a *AppContainer) mustInitDB() {
 		return
 	}
 
-	db, err := storage.NewMysqlGormConnection(a.cfg.DB)
+	db, err := storage.NewPostgresGormConnection(a.cfg.DB)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	a.dbConn = db
+
+	err = storage.AddExtension(a.dbConn)
+	if err != nil {
+		log.Fatal("Create extension failed: ", err)
+	}
+
+	err = storage.Migrate(a.dbConn)
+	if err != nil {
+		log.Fatal("Migration failed: ", err)
+	}
 }
 
 func (a *AppContainer) setAuthService() {

@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"Questify/config"
+	"Questify/pkg/adapters/storage/entities"
 	"fmt"
 
 	"gorm.io/driver/postgres"

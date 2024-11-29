@@ -1,14 +1,11 @@
 package handlers
 
 import (
+	"Questify/api/http/handlers/presenter"
+	"Questify/internal/user"
+	"Questify/service"
 	"errors"
-	"fmt"
-	presenter "github.com/hesamhme/Questify/api/http/handlers/presentor"
-	"github.com/hesamhme/Questify/internal/user"
-	"github.com/hesamhme/Questify/service"
 	"strings"
-	"time"
-
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -25,9 +22,9 @@ func Register(authService *service.AuthService) fiber.Handler {
 			return presenter.BadRequest(c, err)
 		}
 
-		u := presenter.UserRegisterToUserDomain(&req)
+		u := presenter.RegisterRequestToUser(&req)
 
-		newUser, err := authService.CreateUser(c.Context(), u)
+		err = authService.CreateUser(c.Context(), u)
 		if err != nil {
 			if errors.Is(err, user.ErrInvalidEmail) || errors.Is(err, user.ErrInvalidPassword) {
 				return presenter.BadRequest(c, err)
@@ -39,12 +36,15 @@ func Register(authService *service.AuthService) fiber.Handler {
 			return presenter.InternalServerError(c, err)
 		}
 
-		return presenter.Created(c, "user successfully registered", fiber.Map{
-			"user_id": newUser.ID,
-		})
+		data := presenter.RegisterRequest{
+			ID:           u.ID,
+			Email:        u.Email,
+			Password:     u.Password,
+			NationalCode: u.NationalCode,
+		}
+		return presenter.Created(c, "user successfully registered but you need to verify the email please go to api/v1/verify", data)
 	}
 }
-
 
 func LoginUser(authService *service.AuthService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -59,12 +59,12 @@ func LoginUser(authService *service.AuthService) fiber.Handler {
 			return presenter.BadRequest(c, err)
 		}
 
-		c.Cookie(&fiber.Cookie{
-			Name:        "X-Session-ID",
-			Value:       fmt.Sprint(time.Now().UnixNano()),
-			HTTPOnly:    true,
-			SessionOnly: true,
-		})
+		// c.Cookie(&fiber.Cookie{
+		// 	Name:        "X-Session-ID",
+		// 	Value:       fmt.Sprint(time.Now().UnixNano()),
+		// 	HTTPOnly:    true,
+		// 	SessionOnly: true,
+		// })
 
 		authToken, err := authService.Login(c.Context(), req.Email, req.Password)
 		if err != nil {
@@ -74,7 +74,6 @@ func LoginUser(authService *service.AuthService) fiber.Handler {
 		return SendUserToken(c, authToken)
 	}
 }
-
 
 func RefreshToken(authService *service.AuthService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
