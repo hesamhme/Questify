@@ -1,9 +1,8 @@
 package storage
 
 import (
-	"Questify/internal/user"
+	userpkg "Questify/internal/user" 
 	"errors"
-	"regexp"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -15,8 +14,8 @@ type UserRepository struct {
 }
 
 // GetUserByID fetches a user by their ID.
-func (repo *UserRepository) GetUserByID(userID string) (*user.User, error) {
-	var user user.User
+func (repo *UserRepository) GetUserByID(userID string) (*userpkg.User, error) {
+	var user userpkg.User
 	if err := repo.DB.First(&user, "id = ?", userID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("user not found")
@@ -25,14 +24,16 @@ func (repo *UserRepository) GetUserByID(userID string) (*user.User, error) {
 	}
 	return &user, nil
 }
-func (repo *UserRepository) CreateUser(user *user.User) (*user.User, error) {
+
+// CreateUser creates a new user in the database.
+func (repo *UserRepository) CreateUser(user *userpkg.User) (*userpkg.User, error) {
 	// Validate email format
-	if !isValidEmail(user.Email) {
+	if !userpkg.IsValidEmail(user.Email) {
 		return nil, errors.New("invalid email format")
 	}
 
 	// Validate Iranian National ID
-	if !isValidIranianNID(user.NID) {
+	if !userpkg.IsValidIranianNationalCode(user.NID) {
 		return nil, errors.New("invalid Iranian National ID")
 	}
 
@@ -57,35 +58,12 @@ func (repo *UserRepository) CreateUser(user *user.User) (*user.User, error) {
 	return user, nil
 }
 
-// isValidEmail checks if the provided email is valid.
-func isValidEmail(email string) bool {
-	regex := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
-	re := regexp.MustCompile(regex)
-	return re.MatchString(email)
-}
-
-// isValidIranianNID validates an Iranian National ID.
-func isValidIranianNID(nid string) bool {
-	if len(nid) != 10 {
-		return false
-	}
-	for i := 0; i < 10; i++ {
-		if nid[i] < '0' || nid[i] > '9' {
-			return false
-		}
-	}
-	check := int(nid[9] - '0')
-	sum := 0
-	for i := 0; i < 9; i++ {
-		sum += int(nid[i]-'0') * (10 - i)
-	}
-	sum %= 11
-	return (sum < 2 && check == sum) || (sum >= 2 && check+sum == 11)
-}
-
 // GetUserByEmail fetches a user by their email.
-func (repo *UserRepository) GetUserByEmail(email string) (*user.User, error) {
-	var user user.User
+func (repo *UserRepository) GetUserByEmail(email string) (*userpkg.User, error) {
+	if !userpkg.IsValidEmail(email) {
+		return nil, errors.New("invalid email format")
+	}
+	var user userpkg.User
 	if err := repo.DB.Where("email = ?", email).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("user not found")
