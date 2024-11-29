@@ -4,6 +4,7 @@ import (
 	"Questify/internal/user"
 	"errors"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -23,9 +24,22 @@ func (repo *UserRepository) GetUserByID(userID string) (*user.User, error) {
 	}
 	return &user, nil
 }
-
-// CreateUser creates a new user in the database.
 func (repo *UserRepository) CreateUser(user *user.User) (*user.User, error) {
+	// Generate a new UUID if not already set
+	if user.ID == (uuid.UUID{}) {
+		user.ID = uuid.New()
+	}
+
+	// Check if email already exists
+	existingUser, err := repo.GetUserByEmail(user.Email)
+	if err == nil && existingUser != nil {
+		return nil, errors.New("email already exists")
+	} else if err != nil && err.Error() != "user not found" {
+		// Only propagate errors that aren't "user not found"
+		return nil, err
+	}
+
+	// Create the user in the database
 	if err := repo.DB.Create(user).Error; err != nil {
 		return nil, err
 	}
