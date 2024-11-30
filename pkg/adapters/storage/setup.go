@@ -19,16 +19,6 @@ func AddExtension(db *gorm.DB) error {
 	return db.Exec(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`).Error
 }
 
-// func Migrate(db *gorm.DB) error {
-// 	migrator := db.Migrator()
-
-// 	err := migrator.AutoMigrate(&entities.User{},) //&entities.Question{},
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }
-
 
 func Migrate(db *gorm.DB) error {
 	migrator := db.Migrator()
