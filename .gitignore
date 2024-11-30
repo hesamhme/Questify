@@ -24,3 +24,5 @@ go.work
 .vscode\
 .vscode
 lunch.json
+
+.idea/
