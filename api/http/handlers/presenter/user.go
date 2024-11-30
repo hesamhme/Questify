@@ -10,7 +10,7 @@ type RegisterRequest struct {
 	ID           uuid.UUID `json:"id"`
 	Email        string    `json:"email"`
 	Password     string    `json:"password"`
-	NationalCode string    `json:"nationcode"`
+	NationalCode string    `json:"nationalcode"`
 }
 
 func RegisterRequestToUser(registerrequest *RegisterRequest) *user.User {
