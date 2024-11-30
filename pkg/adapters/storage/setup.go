@@ -19,12 +19,41 @@ func AddExtension(db *gorm.DB) error {
 	return db.Exec(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`).Error
 }
 
+// func Migrate(db *gorm.DB) error {
+// 	migrator := db.Migrator()
+
+// 	err := migrator.AutoMigrate(&entities.User{},) //&entities.Question{},
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }
+
+
 func Migrate(db *gorm.DB) error {
 	migrator := db.Migrator()
 
-	err := migrator.AutoMigrate(&entities.User{},) //&entities.Question{},
-	if err != nil {
-		return err
+	// Ensure the table exists
+	if !migrator.HasTable(&entities.User{}) {
+		if err := migrator.CreateTable(&entities.User{}); err != nil {
+			return err
+		}
 	}
-	return nil
+
+	// Ensure the column exists and set a default value
+	if !migrator.HasColumn(&entities.User{}, "national_code") {
+		err := db.Exec(`ALTER TABLE "users" ADD COLUMN "national_code" char(10) DEFAULT '0000000000'`).Error
+		if err != nil {
+			return err
+		}
+		// Apply NOT NULL constraint
+		err = db.Exec(`ALTER TABLE "users" ALTER COLUMN "national_code" SET NOT NULL`).Error
+		if err != nil {
+			return err
+		}
+	}
+
+	// Perform other migrations
+	return migrator.AutoMigrate(&entities.User{})
 }
+
