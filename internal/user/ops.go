@@ -17,21 +17,31 @@ func NewOps(repo Repo) *Ops {
 }
 
 func (o *Ops) Create(ctx context.Context, user *User) error {
-	// TODO validate national code and email
+	// Validate National Code
+	if !IsValidIranianNationalCode(user.NationalCode) {
+		return ErrInvalidNationalCode
+	}
 	err := validateUserRegistration(user)
 	if err != nil {
 		return err
 	}
-	// TODO
-	// hashedPass, err := HashPassword(user.Password)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// user.SetPassword(hashedPass)
+	
+	//hash password
+	// Hash Password
+	err = user.SetPassword(user.Password)
+	if err != nil {
+		return err
+	}
 
-	// lowercase email
-	//TOTO
-	// user.Email = LowerCaseEmail(user.Email)
+	// Validate Email Format
+	if !IsValidEmail(user.Email) {
+		return ErrInvalidEmail
+	}
+
+	// Normalize Email to Lowercase
+	user.Email = LowerCaseEmail(user.Email)
+
+
 	err = o.repo.Create(ctx, user)
 	if err != nil {
 		return err
@@ -44,7 +54,10 @@ func (o *Ops) GetUserByID(ctx context.Context, id uuid.UUID) (*User, error) {
 }
 
 func (o *Ops) GetUserByEmailAndPassword(ctx context.Context, email, password string) (*User, error) {
-	// email = LowerCaseEmail(email) TODO
+	// Normalize email to lowercase
+	email = LowerCaseEmail(email)
+
+	// Retrieve user by email
 	user, err := o.repo.GetByEmail(ctx, email)
 	if err != nil {
 		return nil, err
@@ -54,15 +67,20 @@ func (o *Ops) GetUserByEmailAndPassword(ctx context.Context, email, password str
 		return nil, ErrUserNotFound
 	}
 
-	// if err := CheckPasswordHash(password, user.Password); err != nil {
-	// 	return nil, ErrInvalidAuthentication
-	// } TODO
+	// Check password validity
+	if err := CheckPasswordHash(password, user.Password); err != nil {
+		return nil, ErrInvalidAuthentication
+	}
 
 	return user, nil
 }
+
 
 func (o *Ops) GetUserByEmail(ctx context.Context, email string) (*User, error) {
-	// email = LowerCaseEmail(email) TODO
+	// Normalize email to lowercase
+	email = LowerCaseEmail(email)
+
+	// Retrieve user by email
 	user, err := o.repo.GetByEmail(ctx, email)
 	if err != nil {
 		return nil, err
@@ -71,17 +89,21 @@ func (o *Ops) GetUserByEmail(ctx context.Context, email string) (*User, error) {
 	if user == nil {
 		return nil, ErrUserNotFound
 	}
+
 	return user, nil
 }
 
-func validateUserRegistration(user *User) error {
-	// err := ValidateEmail(user.Email) TODO
-	// if err != nil {
-	// 	return err
-	// }
 
-	// if err := ValidatePasswordWithFeedback(user.Password); err != nil {
-	// 	return err
-	// } // TODO
+func validateUserRegistration(user *User) error {
+	// Validate email format
+	if !IsValidEmail(user.Email) {
+		return ErrInvalidEmail
+	}
+
+	// Validate password strength
+	if err := ValidatePasswordWithFeedback(user.Password); err != nil {
+		return err
+	}
+
 	return nil
 }
