@@ -5,7 +5,9 @@ import (
 	"Questify/internal/user"
 	"Questify/service"
 	"errors"
+	"fmt"
 	"strings"
+
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -89,5 +91,20 @@ func RefreshToken(authService *service.AuthService) fiber.Handler {
 		}
 
 		return SendUserToken(c, authToken)
+	}
+}
+
+func SendTestEmail(app *service.AppContainer) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		recipient := c.Query("recipient", "smtp@mailtrap.io")
+		subject := "Test Email"
+		body := "This is a test email from Questify!"
+
+		err := app.SMTPClient().SendEmail(recipient, subject, body)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("Failed to send email: %v", err))
+		}
+
+		return c.SendString("Email sent successfully!")
 	}
 }

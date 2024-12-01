@@ -29,6 +29,7 @@ func registerGlobalRoutes(router fiber.Router, app *service.AppContainer) {
 	//router.Use(loggerMiddleWare)
 	router.Post("/register", handlers.Register(app.AuthService()))
 	router.Post("/login", handlers.LoginUser(app.AuthService()))
+	router.Get("/test-email", handlers.SendTestEmail(app))
 	router.Get("/refresh", handlers.RefreshToken(app.AuthService()))
 }
 

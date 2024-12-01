@@ -8,6 +8,7 @@ import (
 	"Questify/internal/user"
 	"Questify/pkg/adapters/storage"
 	"Questify/pkg/valuecontext"
+	"Questify/pkg/smtp"
 
 	"gorm.io/gorm"
 )
@@ -17,6 +18,7 @@ type AppContainer struct {
 	dbConn      *gorm.DB
 	userService *UserService
 	authService *AuthService
+	smtpClient  *smtp.SMTPClient
 	//questionService TODO
 }
 
@@ -30,9 +32,11 @@ func NewAppContainer(cfg config.Config) (*AppContainer, error) {
 
 	app.setUserService()
 	app.setAuthService()
+	app.setSMTPClient()
 
 	return app, nil
 }
+
 
 func (a *AppContainer) RawRBConnection() *gorm.DB {
 	return a.dbConn
@@ -101,4 +105,16 @@ func (a *AppContainer) setAuthService() {
 	a.authService = NewAuthService(user.NewOps(storage.NewUserRepo(a.dbConn)), []byte(a.cfg.Server.TokenSecret),
 		a.cfg.Server.TokenExpMinutes,
 		a.cfg.Server.RefreshTokenExpMinutes)
+}
+
+func (a *AppContainer) setSMTPClient() {
+	if a.smtpClient != nil {
+		return
+	}
+
+	a.smtpClient = smtp.NewSMTPClient(a.cfg.SMTP)
+}
+
+func (a *AppContainer) SMTPClient() *smtp.SMTPClient {
+	return a.smtpClient
 }

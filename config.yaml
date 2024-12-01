@@ -11,5 +11,11 @@ db:
   port: 5432
   db_name: "questy_db"
 
-  
+smtp:
+  host: "smtp.gmail.com"
+  port: 587
+  username: "questifysmtpmail@gmail.com"
+  password: "ryov bnfp mmlm ttmy"
+  sender_email: "questifysmtpmail@gmail.com"
+
 

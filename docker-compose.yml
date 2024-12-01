@@ -14,6 +14,12 @@ services:
       - "5432:5432"
     networks:
       - app_network
+  smtp:
+    image: mailhog/mailhog
+    container_name: smtp
+    ports:
+      - "1025:1025" # SMTP server
+      - "8025:8025" # MailHog Web UI
 
   # adminer: # Optional: A database UI for management
   #   image: adminer
