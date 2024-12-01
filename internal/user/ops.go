@@ -26,6 +26,11 @@ func (o *Ops) Create(ctx context.Context, user *User) error {
 		return ErrInvalidNationalCode
 	}
 
+	// Validate Password Strength
+	if err := ValidatePasswordWithFeedback(user.Password); err != nil {
+		return err
+	}
+
 	// Hash Password
 	err := user.SetPassword(user.Password)
 	if err != nil {
@@ -40,6 +45,16 @@ func (o *Ops) Create(ctx context.Context, user *User) error {
 	// Normalize Email to Lowercase
 	user.Email = LowerCaseEmail(user.Email)
 
+	// Check for Duplicate Email (if needed)
+	existingUser, err := o.repo.GetByEmail(ctx, user.Email)
+	if err != nil {
+		return fmt.Errorf("failed to check existing email: %w", err)
+	}
+	if existingUser != nil {
+		return ErrEmailAlreadyExists
+	}
+
+	// Save User to Database
 	err = o.repo.Create(ctx, user)
 	if err != nil {
 		return fmt.Errorf("failed to create user: %w", err)
@@ -47,6 +62,7 @@ func (o *Ops) Create(ctx context.Context, user *User) error {
 
 	return nil
 }
+
 
 func (o *Ops) GetUserByID(ctx context.Context, id uuid.UUID) (*User, error) {
 	return o.repo.GetByID(ctx, id)
