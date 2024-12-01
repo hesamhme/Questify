@@ -5,6 +5,7 @@ import (
 	"errors"
 	"regexp"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/google/uuid"
@@ -13,12 +14,13 @@ import (
 
 var (
 	ErrUserNotFound          = errors.New("user not found")
-	ErrDuplicatedUser        = errors.New("emial/nid already exist")
+	ErrDuplicatedUser        = errors.New("email/national ID already exists")
 	ErrInvalidNationalCode   = errors.New("national code is invalid")
 	ErrInvalidEmail          = errors.New("invalid email format")
 	ErrInvalidPassword       = errors.New("invalid password format")
 	ErrEmailAlreadyExists    = errors.New("email already exists")
-	ErrInvalidAuthentication = errors.New("email and password doesn't match")
+	ErrInvalidAuthentication = errors.New("email and password don't match")
+	ErrInvalidTFA            = errors.New("invalid or expired TFA code")
 	ErrHashPasswordFailed    = errors.New("failed to hash password")
 	ErrPasswordTooShort      = errors.New("password must be at least 8 characters long")
 	ErrPasswordMissingNumber = errors.New("password must include at least one number")
@@ -31,6 +33,7 @@ type Repo interface {
 	Create(ctx context.Context, user *User) error
 	GetByID(ctx context.Context, id uuid.UUID) (*User, error)
 	GetByEmail(ctx context.Context, email string) (*User, error)
+	UpdateUser(ctx context.Context, user *User) error // New method for updating the user
 }
 
 type User struct {
@@ -39,6 +42,8 @@ type User struct {
 	Password     string
 	NationalCode string
 	Role         string
+	TfaCode      string    // Temporary TFA code
+	TfaExpiresAt time.Time // Expiration time for TFA code
 }
 
 // IsValidIranianNationalCode validates an Iranian National Code.
@@ -73,7 +78,6 @@ func LowerCaseEmail(email string) string {
 	return strings.ToLower(email)
 }
 
-
 // HashPassword hashes the given password using bcrypt
 func HashPassword(password string) (string, error) {
 	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -102,7 +106,6 @@ func CheckPasswordHash(password, hashedPassword string) error {
 	}
 	return nil
 }
-
 
 // ValidatePasswordWithFeedback validates a password for strength and provides feedback
 func ValidatePasswordWithFeedback(password string) error {

@@ -7,6 +7,7 @@ import (
 	"Questify/config"
 	"Questify/internal/user"
 	"Questify/pkg/adapters/storage"
+	"Questify/pkg/smtp"
 	"Questify/pkg/valuecontext"
 
 	"gorm.io/gorm"
@@ -17,7 +18,7 @@ type AppContainer struct {
 	dbConn      *gorm.DB
 	userService *UserService
 	authService *AuthService
-	//questionService TODO
+	smtpClient  *smtp.SMTPClient
 }
 
 func NewAppContainer(cfg config.Config) (*AppContainer, error) {
@@ -28,6 +29,7 @@ func NewAppContainer(cfg config.Config) (*AppContainer, error) {
 	app.mustInitDB()
 	storage.Migrate(app.dbConn)
 
+	app.setSMTPClient()
 	app.setUserService()
 	app.setAuthService()
 
@@ -54,8 +56,7 @@ func (a *AppContainer) UserServiceFromCtx(ctx context.Context) *UserService {
 	}
 
 	return NewUserService(
-
-		user.NewOps(storage.NewUserRepo(gc)),
+		user.NewOps(storage.NewUserRepo(gc), a.smtpClient), // Inject SMTPClient
 	)
 }
 
@@ -67,7 +68,7 @@ func (a *AppContainer) setUserService() {
 	if a.userService != nil {
 		return
 	}
-	a.userService = NewUserService(user.NewOps(storage.NewUserRepo(a.dbConn)))
+	a.userService = NewUserService(user.NewOps(storage.NewUserRepo(a.dbConn), a.smtpClient)) // Inject SMTPClient
 }
 
 func (a *AppContainer) mustInitDB() {
@@ -98,7 +99,20 @@ func (a *AppContainer) setAuthService() {
 		return
 	}
 
-	a.authService = NewAuthService(user.NewOps(storage.NewUserRepo(a.dbConn)), []byte(a.cfg.Server.TokenSecret),
+	a.authService = NewAuthService(user.NewOps(storage.NewUserRepo(a.dbConn), a.smtpClient), // Inject SMTPClient
+		[]byte(a.cfg.Server.TokenSecret),
 		a.cfg.Server.TokenExpMinutes,
 		a.cfg.Server.RefreshTokenExpMinutes)
+}
+
+func (a *AppContainer) setSMTPClient() {
+	if a.smtpClient != nil {
+		return
+	}
+
+	a.smtpClient = smtp.NewSMTPClient(a.cfg.SMTP)
+}
+
+func (a *AppContainer) SMTPClient() *smtp.SMTPClient {
+	return a.smtpClient
 }

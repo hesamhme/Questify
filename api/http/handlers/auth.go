@@ -6,17 +6,18 @@ import (
 	"Questify/service"
 	"errors"
 	"strings"
+
 	"github.com/gofiber/fiber/v2"
 )
 
 func Register(authService *service.AuthService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-
 		var req presenter.RegisterRequest
 
 		if err := c.BodyParser(&req); err != nil {
 			return SendError(c, err, fiber.StatusBadRequest)
 		}
+
 		err := BodyValidator(req)
 		if err != nil {
 			return presenter.BadRequest(c, err)
@@ -26,23 +27,18 @@ func Register(authService *service.AuthService) fiber.Handler {
 
 		err = authService.CreateUser(c.Context(), u)
 		if err != nil {
-			if errors.Is(err, user.ErrInvalidEmail) || errors.Is(err, user.ErrInvalidPassword) {
-				return presenter.BadRequest(c, err)
-			}
-			if errors.Is(err, user.ErrEmailAlreadyExists) {
-				return presenter.Conflict(c, err)
-			}
-
 			return presenter.InternalServerError(c, err)
 		}
 
-		data := presenter.RegisterRequest{
-			ID:           u.ID,
-			Email:        u.Email,
-			Password:     u.Password,
-			NationalCode: u.NationalCode,
-		}
-		return presenter.Created(c, "user successfully registered but you need to verify the email please go to api/v1/verify", data)
+		// Response with the same TFA code stored in the database
+		return c.JSON(fiber.Map{
+			"success": true,
+			"message": "TFA code sent to email.",
+			"data": fiber.Map{
+				"message":  "User successfully registered. Please verify your TFA code.",
+				"tfa_code": u.TfaCode, // Ensure this matches the database
+			},
+		})
 	}
 }
 
@@ -89,5 +85,28 @@ func RefreshToken(authService *service.AuthService) fiber.Handler {
 		}
 
 		return SendUserToken(c, authToken)
+	}
+}
+
+func ConfirmTFA(authService *service.AuthService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var req struct {
+			Email string `json:"email"`
+			Code  string `json:"code"`
+		}
+
+		if err := c.BodyParser(&req); err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, "Invalid request payload")
+		}
+
+		err := authService.ConfirmTFA(c.Context(), req.Email, req.Code)
+		if err != nil {
+			if errors.Is(err, user.ErrInvalidTFA) {
+				return presenter.BadRequest(c, err)
+			}
+			return presenter.InternalServerError(c, err)
+		}
+
+		return c.JSON(fiber.Map{"message": "TFA confirmed. Registration complete."})
 	}
 }
