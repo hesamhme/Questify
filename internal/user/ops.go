@@ -1,18 +1,22 @@
 package user
 
 import (
+	"Questify/pkg/smtp"
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 )
 
 type Ops struct {
 	repo Repo
+	smtp *smtp.SMTPClient
 }
 
-func NewOps(repo Repo) *Ops {
+func NewOps(repo Repo, smtpClient *smtp.SMTPClient) *Ops {
 	return &Ops{
 		repo: repo,
+		smtp: smtpClient,
 	}
 }
 
@@ -21,14 +25,9 @@ func (o *Ops) Create(ctx context.Context, user *User) error {
 	if !IsValidIranianNationalCode(user.NationalCode) {
 		return ErrInvalidNationalCode
 	}
-	err := validateUserRegistration(user)
-	if err != nil {
-		return err
-	}
-	
-	//hash password
+
 	// Hash Password
-	err = user.SetPassword(user.Password)
+	err := user.SetPassword(user.Password)
 	if err != nil {
 		return err
 	}
@@ -41,11 +40,11 @@ func (o *Ops) Create(ctx context.Context, user *User) error {
 	// Normalize Email to Lowercase
 	user.Email = LowerCaseEmail(user.Email)
 
-
 	err = o.repo.Create(ctx, user)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create user: %w", err)
 	}
+
 	return nil
 }
 
@@ -54,10 +53,8 @@ func (o *Ops) GetUserByID(ctx context.Context, id uuid.UUID) (*User, error) {
 }
 
 func (o *Ops) GetUserByEmailAndPassword(ctx context.Context, email, password string) (*User, error) {
-	// Normalize email to lowercase
 	email = LowerCaseEmail(email)
 
-	// Retrieve user by email
 	user, err := o.repo.GetByEmail(ctx, email)
 	if err != nil {
 		return nil, err
@@ -67,7 +64,6 @@ func (o *Ops) GetUserByEmailAndPassword(ctx context.Context, email, password str
 		return nil, ErrUserNotFound
 	}
 
-	// Check password validity
 	if err := CheckPasswordHash(password, user.Password); err != nil {
 		return nil, ErrInvalidAuthentication
 	}
@@ -75,12 +71,9 @@ func (o *Ops) GetUserByEmailAndPassword(ctx context.Context, email, password str
 	return user, nil
 }
 
-
 func (o *Ops) GetUserByEmail(ctx context.Context, email string) (*User, error) {
-	// Normalize email to lowercase
 	email = LowerCaseEmail(email)
 
-	// Retrieve user by email
 	user, err := o.repo.GetByEmail(ctx, email)
 	if err != nil {
 		return nil, err
@@ -93,17 +86,13 @@ func (o *Ops) GetUserByEmail(ctx context.Context, email string) (*User, error) {
 	return user, nil
 }
 
+func (o *Ops) UpdateUser(ctx context.Context, user *User) error {
+	return o.repo.UpdateUser(ctx, user)
+}
 
-func validateUserRegistration(user *User) error {
-	// Validate email format
-	if !IsValidEmail(user.Email) {
-		return ErrInvalidEmail
-	}
+func (o *Ops) Send2FACodeEmail(ctx context.Context, email, code string) error {
+	subject := "Your 2FA Code"
+	body := fmt.Sprintf("Your 2FA code is: %s. It will expire in 2 minutes.", code)
 
-	// Validate password strength
-	if err := ValidatePasswordWithFeedback(user.Password); err != nil {
-		return err
-	}
-
-	return nil
+	return o.smtp.SendEmail(email, subject, body)
 }

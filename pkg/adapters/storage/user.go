@@ -59,7 +59,15 @@ func (r *userRepo) GetByEmail(ctx context.Context, email string) (*user.User, er
 		}
 		return nil, err
 	}
-	uu:= mappers.UserEntityToDomain(user)
+	uu := mappers.UserEntityToDomain(user)
 	return &uu, nil
+}
 
+func (r *userRepo) UpdateUser(ctx context.Context, user *user.User) error {
+	updatedUser := mappers.UserDomainToEntity(user)
+	err := r.db.WithContext(ctx).Model(&entities.User{}).Where("id = ?", user.ID).Updates(updatedUser).Error
+	if err != nil {
+		return err
+	}
+	return nil
 }
