@@ -32,6 +32,11 @@ func registerGlobalRoutes(router fiber.Router, app *service.AppContainer) {
 	router.Get("/refresh", handlers.RefreshToken(app.AuthService()))
 }
 
+func registerSurveyRoutes(router fiber.Router, app *service.AppContainer) {
+	router = router.Group("/survey")
+	router.Post("/question", handlers.CreateQuestion(app.SurveyService()))
+}
+
 // func userRoleChecker() fiber.Handler {
 // 	return middlewares.RoleChecker("user")
 // }

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"Questify/internal/question"
 	"context"
 	"log"
 
@@ -13,11 +14,11 @@ import (
 )
 
 type AppContainer struct {
-	cfg         config.Config
-	dbConn      *gorm.DB
-	userService *UserService
-	authService *AuthService
-	//questionService TODO
+	cfg           config.Config
+	dbConn        *gorm.DB
+	userService   *UserService
+	authService   *AuthService
+	surveyService *SurveyService
 }
 
 func NewAppContainer(cfg config.Config) (*AppContainer, error) {
@@ -30,6 +31,7 @@ func NewAppContainer(cfg config.Config) (*AppContainer, error) {
 
 	app.setUserService()
 	app.setAuthService()
+	app.setSurveyService()
 
 	return app, nil
 }
@@ -101,4 +103,16 @@ func (a *AppContainer) setAuthService() {
 	a.authService = NewAuthService(user.NewOps(storage.NewUserRepo(a.dbConn)), []byte(a.cfg.Server.TokenSecret),
 		a.cfg.Server.TokenExpMinutes,
 		a.cfg.Server.RefreshTokenExpMinutes)
+}
+
+func (a *AppContainer) setSurveyService() {
+	if a.surveyService != nil {
+		return
+	}
+
+	a.surveyService = NewSurveyService(question.NewOps(storage.NewQuestionRepo(a.dbConn)))
+}
+
+func (a *AppContainer) SurveyService() *SurveyService {
+	return a.surveyService
 }
