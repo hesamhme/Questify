@@ -13,11 +13,11 @@ type Question struct {
 	Text        string    `gorm:"type:text;not null"`
 	Type        uint8     `gorm:"type:bit;not null"`
 	IsMandatory bool      `gorm:"type:boolean;not null"`
-	MediaLink   string    `gorm:"type:text;not null"`
+	MediaPath   string    `gorm:"type:text;not null"`
 	CreatedAt   time.Time `gorm:"type:timestamp;not null"`
 }
 
-type QuestionMultipleChoices struct {
+type QuestionChoices struct {
 	ID         uint      `gorm:"type:int;primaryKey"`
 	QuestionID uuid.UUID `gorm:"type:uuid;not null"`
 	Question   Question  `gorm:"foreignKey:QuestionID;references:ID"`
