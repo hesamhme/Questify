@@ -6,9 +6,12 @@ import (
 	"Questify/pkg/adapters/storage/mappers"
 	"context"
 	"errors"
+	"fmt"
+
+	"strings"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"strings"
 )
 
 type questionRepo struct {
@@ -21,6 +24,7 @@ func NewQuestionRepo(db *gorm.DB) question.Repo {
 	}
 }
 
+// Create creates a new question along with its choices
 func (r *questionRepo) Create(ctx context.Context, question *question.Question) error {
 	newQuestion, newQuestionChoices := mappers.QuestionDomainToEntity(question)
 	err := r.db.Create(&newQuestion).Error
@@ -44,6 +48,7 @@ func (r *questionRepo) Create(ctx context.Context, question *question.Question) 
 	return nil
 }
 
+// GetByID retrieves a question by its ID along with its choices
 func (r *questionRepo) GetByID(ctx context.Context, id uuid.UUID) (*question.Question, error) {
 	var questionEntity entities.Question
 
@@ -66,4 +71,35 @@ func (r *questionRepo) GetByID(ctx context.Context, id uuid.UUID) (*question.Que
 
 	questionDomain := mappers.QuestionEntityToDomain(questionEntity, questionChoices)
 	return &questionDomain, nil
+}
+
+// CreateAnswer adds a new answer to the database
+func (r *questionRepo) CreateAnswer(ctx context.Context, answer *question.Answer) error {
+	newAnswer := mappers.AnswerDomainToEntity(*answer)
+	err := r.db.WithContext(ctx).Create(&newAnswer).Error
+	if err != nil {
+		return fmt.Errorf("failed to create answer: %w", err)
+	}
+	answer.ID = newAnswer.ID
+	return nil
+}
+
+// GetAnswersByQuestion retrieves all answers for a specific question
+func (r *questionRepo) GetAnswersByQuestion(ctx context.Context, questionID uuid.UUID) ([]question.Answer, error) {
+	var answerEntities []entities.Answer
+	err := r.db.WithContext(ctx).Where("question_id = ?", questionID).Find(&answerEntities).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get answers by question: %w", err)
+	}
+	return mappers.BatchAnswerEntityToDomain(answerEntities), nil
+}
+
+// GetAnswersByUser retrieves all answers submitted by a specific user
+func (r *questionRepo) GetAnswersByUser(ctx context.Context, userID uuid.UUID) ([]question.Answer, error) {
+	var answerEntities []entities.Answer
+	err := r.db.WithContext(ctx).Where("user_id = ?", userID).Find(&answerEntities).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get answers by user: %w", err)
+	}
+	return mappers.BatchAnswerEntityToDomain(answerEntities), nil
 }

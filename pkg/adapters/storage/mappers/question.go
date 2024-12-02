@@ -65,3 +65,32 @@ func QuestionChoiceDomainToEntity(domain question.QuestionChoice, entityQuestion
 		IsAnswer:   domain.IsAnswer,
 	}
 }
+
+
+func AnswerEntityToDomain(entity entities.Answer) question.Answer {
+	return question.Answer{
+		ID:         entity.ID,
+		QuestionID: entity.QuestionID,
+		UserID:     entity.UserID,
+		Response:   entity.Response,
+		CreatedAt:  entity.CreatedAt,
+	}
+}
+
+func AnswerDomainToEntity(domain question.Answer) entities.Answer {
+	return entities.Answer{
+		ID:         domain.ID,
+		QuestionID: domain.QuestionID,
+		UserID:     domain.UserID,
+		Response:   domain.Response,
+		CreatedAt:  domain.CreatedAt,
+	}
+}
+
+func BatchAnswerEntityToDomain(entities []entities.Answer) []question.Answer {
+	var domainAnswers []question.Answer
+	for _, entity := range entities {
+		domainAnswers = append(domainAnswers, AnswerEntityToDomain(entity))
+	}
+	return domainAnswers
+}
