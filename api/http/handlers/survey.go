@@ -13,12 +13,15 @@ func CreateQuestion(questionService *service.SurveyService) fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).SendString("Invalid request body")
 		}
 
-		_, err := c.FormFile("media") // "media" is the name of the form field for the file
+		file, err := c.FormFile("media")
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).SendString("No file uploaded or invalid file")
 		}
 
-		filePath := "./" //TODO: Save file and get the path
+		filePath := "./uploads/" + file.Filename
+		if err := c.SaveFile(file, filePath); err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Failed to save file")
+		}
 
 		domainQuestion := presenter.MapPresenterToQuestion(&question, filePath)
 

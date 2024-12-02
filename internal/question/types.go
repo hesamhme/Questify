@@ -25,7 +25,7 @@ type Question struct {
 	Type            QuestionType
 	IsMandatory     bool
 	MediaPath       string
-	QuestionChoices []QuestionChoice
+	QuestionChoices *[]QuestionChoice // todo: make it pointer to handle nil ops
 }
 
 type QuestionChoice struct {

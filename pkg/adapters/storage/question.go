@@ -45,9 +45,9 @@ func (r *questionRepo) Create(ctx context.Context, question *question.Question) 
 }
 
 func (r *questionRepo) GetByID(ctx context.Context, id uuid.UUID) (*question.Question, error) {
-	var question entities.Question
+	var questionEntity entities.Question
 
-	err := r.db.WithContext(ctx).Model(&entities.Question{}).Where("id = ?", id).First(&question).Error
+	err := r.db.WithContext(ctx).Model(&entities.Question{}).Where("id = ?", id).First(&questionEntity).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -64,6 +64,6 @@ func (r *questionRepo) GetByID(ctx context.Context, id uuid.UUID) (*question.Que
 		return nil, err
 	}
 
-	questionDomain := mappers.QuestionEntityToDomain(question, questionChoices)
+	questionDomain := mappers.QuestionEntityToDomain(questionEntity, questionChoices)
 	return &questionDomain, nil
 }

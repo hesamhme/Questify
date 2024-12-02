@@ -18,6 +18,7 @@ func NewSurveyService(questionOps *question.Ops) *SurveyService {
 }
 
 func (s *SurveyService) CreateQuestion(ctx context.Context, question *question.Question) error {
+	//TODO: Check if survey exist!
 	return s.questionOps.Create(ctx, question)
 }
 

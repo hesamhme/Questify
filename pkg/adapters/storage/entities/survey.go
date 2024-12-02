@@ -1,6 +1,7 @@
 package entities
 
 import (
+	"database/sql"
 	"github.com/google/uuid"
 	"time"
 )
@@ -20,13 +21,13 @@ type Survey struct {
 }
 
 type SurveyRequirements struct {
-	ID         uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
-	SurveyID   uuid.UUID `gorm:"type:uuid;not null"`
-	Survey     Survey    `gorm:"foreignKey:SurveyID;references:ID"`
-	MinAge     uint      `gorm:"type:integer;"`
-	MaxAge     uint      `gorm:"type:integer;"`
-	CityId     uint      `gorm:"type:int;not null"`               // The foreign key column
-	City       City      `gorm:"foreignKey:CityId;references:ID"` // Establish foreign key relationship
-	Gender     string    `gorm:"type:text;"`
-	ReviewTime time.Time `gorm:"type:timestamp;"`
+	ID         uuid.UUID     `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
+	SurveyID   uuid.UUID     `gorm:"type:uuid;not null"`
+	Survey     Survey        `gorm:"foreignKey:SurveyID;references:ID"`
+	MinAge     sql.NullInt32 `gorm:"type:integer;"`
+	MaxAge     sql.NullInt32 `gorm:"type:integer;"`
+	CityId     sql.NullInt32 `gorm:"type:int;not null"`
+	City       City          `gorm:"foreignKey:CityId;references:ID"`
+	Gender     string        `gorm:"type:text;"`
+	ReviewTime time.Time     `gorm:"type:timestamp;"`
 }

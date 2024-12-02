@@ -8,6 +8,9 @@ import (
 )
 
 func QuestionEntityToDomain(entity entities.Question, questionChoices []entities.QuestionChoices) question.Question {
+
+	choices := BatchQuestionChoiceEntityToDomain(questionChoices)
+	
 	return question.Question{
 		ID:              entity.ID,
 		Index:           entity.Index,
@@ -16,7 +19,7 @@ func QuestionEntityToDomain(entity entities.Question, questionChoices []entities
 		Type:            question.QuestionType(entity.Type),
 		IsMandatory:     entity.IsMandatory,
 		MediaPath:       entity.MediaPath,
-		QuestionChoices: BatchQuestionChoiceEntityToDomain(questionChoices),
+		QuestionChoices: &choices,
 	}
 }
 
@@ -46,10 +49,10 @@ func QuestionDomainToEntity(domainQuestion *question.Question) (*entities.Questi
 	}
 
 	questionChoiceEntities := make([]entities.QuestionChoices, 0)
-	for _, questionChoice := range domainQuestion.QuestionChoices {
+	for _, questionChoice := range *domainQuestion.QuestionChoices {
 		questionChoiceEntities = append(questionChoiceEntities, QuestionChoiceDomainToEntity(questionChoice, &questionEntity))
 	}
-	
+
 	return &questionEntity, &questionChoiceEntities
 }
 
