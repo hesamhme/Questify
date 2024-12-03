@@ -17,5 +17,3 @@ smtp:
   username: "questifysmtpmail@gmail.com"
   password: "ryov bnfp mmlm ttmy"
   sender_email: "questifysmtpmail@gmail.com"
-
-
