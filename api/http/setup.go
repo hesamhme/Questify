@@ -32,7 +32,9 @@ func registerGlobalRoutes(router fiber.Router, app *service.AppContainer) {
 	router.Post("/login", handlers.LoginUser(app.AuthService()))
 	// router.Get("/test-email", handlers.SendTestEmail(app))
 	router.Get("/refresh", handlers.RefreshToken(app.AuthService()))
-
+	// router.Get("/profile/<:id>/wallet", handlers.ShowBalance)
+	router.Post("/profile/wallet/transfer", handlers.TransferFunds)
+	router.Post("/profile/wallet/deposit", handlers.DepositFunds)
 }
 
 // func userRoleChecker() fiber.Handler {
