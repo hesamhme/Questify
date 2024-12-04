@@ -41,18 +41,19 @@ func (o *Ops) CreateAnswer(ctx context.Context, answer *Answer) error {
 	return nil
 }
 
-// GetAnswersByQuestion retrieves all answers for a specific question
-func (o *Ops) GetAnswersByQuestion(ctx context.Context, questionID uuid.UUID) ([]Answer, error) {
-	answers, err := o.repo.GetAnswersByQuestion(ctx, questionID)
+
+// GetAnswersByQuestion retrieves all answers for a specific question with pagination
+func (o *Ops) GetAnswersByQuestion(ctx context.Context, questionID uuid.UUID, limit, offset int) ([]Answer, error) {
+	answers, err := o.repo.GetAnswersByQuestion(ctx, questionID, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get answers by question: %w", err)
 	}
 	return answers, nil
 }
 
-// GetAnswersByUser retrieves all answers submitted by a specific user
-func (o *Ops) GetAnswersByUser(ctx context.Context, userID uuid.UUID) ([]Answer, error) {
-	answers, err := o.repo.GetAnswersByUser(ctx, userID)
+// GetAnswersByUser retrieves all answers submitted by a specific user for a survey with pagination
+func (o *Ops) GetAnswersByUser(ctx context.Context, userID, surveyID uuid.UUID, limit, offset int) ([]Answer, error) {
+	answers, err := o.repo.GetAnswersByUser(ctx, userID, surveyID, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get answers by user: %w", err)
 	}

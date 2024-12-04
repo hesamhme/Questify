@@ -13,8 +13,8 @@ type Repo interface {
 
 	// New methods for Answer
 	CreateAnswer(ctx context.Context, answer *Answer) error
-	GetAnswersByQuestion(ctx context.Context, questionID uuid.UUID) ([]Answer, error)
-	GetAnswersByUser(ctx context.Context, userID uuid.UUID) ([]Answer, error)
+	GetAnswersByQuestion(ctx context.Context, questionID uuid.UUID, limit, offset int) ([]Answer, error) // Updated
+    GetAnswersByUser(ctx context.Context, userID, surveyID uuid.UUID, limit, offset int) ([]Answer, error) // Updated
 }
 
 type QuestionType int
