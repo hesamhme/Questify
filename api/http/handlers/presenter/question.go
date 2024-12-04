@@ -2,6 +2,8 @@ package presenter
 
 import (
 	"Questify/internal/question"
+	"time"
+
 	"github.com/google/uuid"
 )
 
@@ -44,6 +46,7 @@ func MapPresenterToQuestion(presenterQuestion *Question, mediaPath string) *ques
 		})
 	}
 
+	// Fix: Wrap qChoices as a pointer
 	return &question.Question{
 		ID:              presenterQuestion.ID,
 		Index:           presenterQuestion.Index,
@@ -51,7 +54,35 @@ func MapPresenterToQuestion(presenterQuestion *Question, mediaPath string) *ques
 		Text:            presenterQuestion.Text,
 		Type:            qType,
 		IsMandatory:     presenterQuestion.IsMandatory,
-		QuestionChoices: qChoices,
+		QuestionChoices: &qChoices, // Pointer to slice ba ejaze ARYA jan :D
 		MediaPath:       mediaPath,
+	}
+}
+
+type Answer struct {
+	ID         uuid.UUID `json:"id"`
+	QuestionID uuid.UUID `json:"question_id"`
+	UserID     uuid.UUID `json:"user_id"`
+	Response   string    `json:"response"`
+	CreatedAt  string    `json:"created_at"` // Use string to handle formatting in JSON
+}
+
+func MapAnswerToPresenter(answer question.Answer) Answer {
+	return Answer{
+		ID:         answer.ID,
+		QuestionID: answer.QuestionID,
+		UserID:     answer.UserID,
+		Response:   answer.Response,
+		CreatedAt:  answer.CreatedAt.Format("2006-01-02 15:04:05"), // Format as ISO string
+	}
+}
+
+func MapPresenterToAnswer(presenterAnswer *Answer) *question.Answer {
+	return &question.Answer{
+		ID:         presenterAnswer.ID,
+		QuestionID: presenterAnswer.QuestionID,
+		UserID:     presenterAnswer.UserID,
+		Response:   presenterAnswer.Response,
+		CreatedAt:  time.Now(), // Assume the answer is created now
 	}
 }
