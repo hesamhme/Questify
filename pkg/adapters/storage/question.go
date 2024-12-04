@@ -84,20 +84,25 @@ func (r *questionRepo) CreateAnswer(ctx context.Context, answer *question.Answer
 	return nil
 }
 
-// GetAnswersByQuestion retrieves all answers for a specific question
-func (r *questionRepo) GetAnswersByQuestion(ctx context.Context, questionID uuid.UUID) ([]question.Answer, error) {
+func (r *questionRepo) GetAnswersByQuestion(ctx context.Context, questionID uuid.UUID, limit, offset int) ([]question.Answer, error) {
 	var answerEntities []entities.Answer
-	err := r.db.WithContext(ctx).Where("question_id = ?", questionID).Find(&answerEntities).Error
+	err := r.db.WithContext(ctx).
+		Where("question_id = ?", questionID).
+		Limit(limit).Offset(offset). // Add pagination
+		Find(&answerEntities).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get answers by question: %w", err)
 	}
 	return mappers.BatchAnswerEntityToDomain(answerEntities), nil
 }
 
-// GetAnswersByUser retrieves all answers submitted by a specific user
-func (r *questionRepo) GetAnswersByUser(ctx context.Context, userID uuid.UUID) ([]question.Answer, error) {
+func (r *questionRepo) GetAnswersByUser(ctx context.Context, userID, surveyID uuid.UUID, limit, offset int) ([]question.Answer, error) {
 	var answerEntities []entities.Answer
-	err := r.db.WithContext(ctx).Where("user_id = ?", userID).Find(&answerEntities).Error
+	err := r.db.WithContext(ctx).
+		Joins("JOIN questions ON answers.question_id = questions.id").
+		Where("answers.user_id = ? AND questions.survey_id = ?", userID, surveyID). // Filter by user and survey
+		Limit(limit).Offset(offset).                                                // Add pagination
+		Find(&answerEntities).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get answers by user: %w", err)
 	}
