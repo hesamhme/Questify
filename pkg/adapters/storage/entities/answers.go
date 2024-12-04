@@ -8,8 +8,8 @@ import (
 
 type Answer struct {
 	ID         uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
-	QuestionID Question `gorm:"foreignKey:ID;references:ID"` 
-	UserID     User `gorm:"foreignKey:UserID;references:ID"`
+	QuestionID uuid.UUID `gorm:"type:uuid;not null"` // Correctly reference the Question's ID
+	UserID     uuid.UUID `gorm:"type:uuid;not null"` // Correctly reference the User's ID
 	Response   string    `gorm:"type:text;not null"`
 	CreatedAt  time.Time `gorm:"autoCreateTime"`
 }

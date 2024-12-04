@@ -34,3 +34,27 @@ func CreateQuestion(questionService *service.SurveyService) fiber.Handler {
 		return presenter.Created(c, "Created With ID: ", domainQuestion.ID)
 	}
 }
+
+func CreateAnswer(surveyService *service.SurveyService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		// Parse the request body
+		var req presenter.Answer
+		if err := c.BodyParser(&req); err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, "Invalid request payload")
+		}
+
+		// Map presenter answer to domain model
+		answer := presenter.MapPresenterToAnswer(&req)
+
+		// Call the service to create the answer
+		err := surveyService.CreateAnswer(c.Context(), answer)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+
+		return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+			"success": true,
+			"message": "Answer submitted successfully.",
+		})
+	}
+}

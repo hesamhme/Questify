@@ -116,3 +116,8 @@ func (a *AppContainer) setSurveyService() {
 func (a *AppContainer) SurveyService() *SurveyService {
 	return a.surveyService
 }
+
+
+func (s *SurveyService) CreateAnswer(ctx context.Context, answer *question.Answer) error {
+	return s.questionOps.CreateAnswer(ctx, answer)
+}

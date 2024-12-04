@@ -2,7 +2,6 @@ package presenter
 
 import (
 	"Questify/internal/question"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -64,17 +63,6 @@ type Answer struct {
 	QuestionID uuid.UUID `json:"question_id"`
 	UserID     uuid.UUID `json:"user_id"`
 	Response   string    `json:"response"`
-	CreatedAt  string    `json:"created_at"` // Use string to handle formatting in JSON
-}
-
-func MapAnswerToPresenter(answer question.Answer) Answer {
-	return Answer{
-		ID:         answer.ID,
-		QuestionID: answer.QuestionID,
-		UserID:     answer.UserID,
-		Response:   answer.Response,
-		CreatedAt:  answer.CreatedAt.Format("2006-01-02 15:04:05"), // Format as ISO string
-	}
 }
 
 func MapPresenterToAnswer(presenterAnswer *Answer) *question.Answer {
@@ -83,6 +71,5 @@ func MapPresenterToAnswer(presenterAnswer *Answer) *question.Answer {
 		QuestionID: presenterAnswer.QuestionID,
 		UserID:     presenterAnswer.UserID,
 		Response:   presenterAnswer.Response,
-		CreatedAt:  time.Now(), // Assume the answer is created now
 	}
 }

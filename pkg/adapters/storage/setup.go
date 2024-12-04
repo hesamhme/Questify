@@ -50,6 +50,6 @@ func Migrate(db *gorm.DB) error {
 		&entities.City{},
 		&entities.Question{},
 		&entities.Answer{},
-		// &entities.QuestionMultipleChoices{}
+		// &entities.QuestionMultipleChoices{},
 		)
 }

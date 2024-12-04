@@ -70,25 +70,20 @@ func QuestionChoiceDomainToEntity(domain question.QuestionChoice, entityQuestion
 func AnswerEntityToDomain(entity entities.Answer) question.Answer {
 	return question.Answer{
 		ID:         entity.ID,
-		QuestionID: entity.QuestionID.ID, // Extract the ID from the Question reference
-		UserID:     entity.UserID.ID,     // Extract the ID from the User reference
+		QuestionID: entity.QuestionID, // Directly use the QuestionID field
+		UserID:     entity.UserID,     // Directly use the UserID field
 		Response:   entity.Response,
 		CreatedAt:  entity.CreatedAt,
 	}
 }
 
-
 func AnswerDomainToEntity(domain question.Answer) entities.Answer {
 	return entities.Answer{
-		ID: domain.ID,
-		QuestionID: entities.Question{ // Create a Question reference
-			ID: domain.QuestionID,
-		},
-		UserID: entities.User{ // Create a User reference
-			ID: domain.UserID,
-		},
-		Response:  domain.Response,
-		CreatedAt: domain.CreatedAt,
+		ID:         domain.ID,
+		QuestionID: domain.QuestionID, // Directly assign QuestionID
+		UserID:     domain.UserID,     // Directly assign UserID
+		Response:   domain.Response,
+		CreatedAt:  domain.CreatedAt,
 	}
 }
 
