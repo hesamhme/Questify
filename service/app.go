@@ -2,6 +2,7 @@ package service
 
 import (
 	"Questify/internal/question"
+	"Questify/internal/survey"
 	"context"
 	"log"
 
@@ -15,11 +16,11 @@ import (
 )
 
 type AppContainer struct {
-	cfg         config.Config
-	dbConn      *gorm.DB
-	userService *UserService
-	authService *AuthService
-	smtpClient  *smtp.SMTPClient
+	cfg           config.Config
+	dbConn        *gorm.DB
+	userService   *UserService
+	authService   *AuthService
+	smtpClient    *smtp.SMTPClient
 	surveyService *SurveyService
 }
 
@@ -108,16 +109,19 @@ func (a *AppContainer) setAuthService() {
 		a.cfg.Server.RefreshTokenExpMinutes)
 }
 
+func (a *AppContainer) SurveyService() *SurveyService {
+	return a.surveyService
+}
+
 func (a *AppContainer) setSurveyService() {
 	if a.surveyService != nil {
 		return
 	}
 
-	a.surveyService = NewSurveyService(question.NewOps(storage.NewQuestionRepo(a.dbConn)))
-}
-
-func (a *AppContainer) SurveyService() *SurveyService {
-	return a.surveyService
+	a.surveyService = NewSurveyService(
+		question.NewOps(storage.NewQuestionRepo(a.dbConn)),
+		survey.NewOps(storage.NewSurveyRepo(a.dbConn)),
+	)
 }
 
 func (a *AppContainer) setSMTPClient() {

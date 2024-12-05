@@ -45,13 +45,13 @@ func MapPresenterToQuestion(presenterQuestion *Question, mediaPath string) *ques
 	}
 
 	return &question.Question{
-		ID:              presenterQuestion.ID,
-		Index:           presenterQuestion.Index,
-		SurveyId:        presenterQuestion.SurveyId,
-		Text:            presenterQuestion.Text,
-		Type:            qType,
-		IsMandatory:     presenterQuestion.IsMandatory,
-		QuestionChoices: qChoices,
-		MediaPath:       mediaPath,
+		ID:          presenterQuestion.ID,
+		Index:       presenterQuestion.Index,
+		SurveyId:    presenterQuestion.SurveyId,
+		Text:        presenterQuestion.Text,
+		Type:        qType,
+		IsMandatory: presenterQuestion.IsMandatory,
+		//QuestionChoices: qChoices,
+		MediaPath: mediaPath,
 	}
 }
