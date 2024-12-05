@@ -2,6 +2,7 @@ package presenter
 
 import (
 	"Questify/internal/question"
+
 	"github.com/google/uuid"
 )
 
@@ -44,15 +45,33 @@ func MapPresenterToQuestion(presenterQuestion *Question, mediaPath string, surve
 		})
 	}
 
+	// Fix: Wrap qChoices as a pointer
 	return &question.Question{
-		ID:              presenterQuestion.ID,
-		Index:           presenterQuestion.Index,
-		SurveyId:        surveyId,
-		Text:            presenterQuestion.Text,
-		Type:            qType,
-		IsMandatory:     presenterQuestion.IsMandatory,
+		ID:          presenterQuestion.ID,
+		Index:       presenterQuestion.Index,
+		SurveyId:    surveyId,
+		Text:        presenterQuestion.Text,
+		Type:        qType,
+		IsMandatory: presenterQuestion.IsMandatory,
+
 		QuestionChoices: &qChoices,
 		MediaPath:       mediaPath,
+	}
+}
+
+type Answer struct {
+	ID         uuid.UUID `json:"id"`
+	QuestionID uuid.UUID `json:"question_id"`
+	UserID     uuid.UUID `json:"user_id"`
+	Response   string    `json:"response"`
+}
+
+func MapPresenterToAnswer(presenterAnswer *Answer) *question.Answer {
+	return &question.Answer{
+		ID:         presenterAnswer.ID,
+		QuestionID: presenterAnswer.QuestionID,
+		UserID:     presenterAnswer.UserID,
+		Response:   presenterAnswer.Response,
 	}
 }
 

@@ -6,9 +6,12 @@ import (
 	"Questify/pkg/adapters/storage/mappers"
 	"context"
 	"errors"
+	"fmt"
+
+	"strings"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"strings"
 )
 
 type questionRepo struct {
@@ -21,6 +24,7 @@ func NewQuestionRepo(db *gorm.DB) question.Repo {
 	}
 }
 
+// Create creates a new question along with its choices
 func (r *questionRepo) Create(ctx context.Context, question *question.Question) error {
 	newQuestion, newQuestionChoices := mappers.QuestionDomainToEntity(question)
 	err := r.db.Create(&newQuestion).Error
@@ -44,6 +48,7 @@ func (r *questionRepo) Create(ctx context.Context, question *question.Question) 
 	return nil
 }
 
+// GetByID retrieves a question by its ID along with its choices
 func (r *questionRepo) GetByID(ctx context.Context, id uuid.UUID) (*question.Question, error) {
 	var questionEntity entities.Question
 
@@ -68,6 +73,42 @@ func (r *questionRepo) GetByID(ctx context.Context, id uuid.UUID) (*question.Que
 	return &questionDomain, nil
 }
 
+// CreateAnswer adds a new answer to the database
+func (r *questionRepo) CreateAnswer(ctx context.Context, answer *question.Answer) error {
+	newAnswer := mappers.AnswerDomainToEntity(*answer)
+	err := r.db.WithContext(ctx).Create(&newAnswer).Error
+	if err != nil {
+		return fmt.Errorf("failed to create answer: %w", err)
+	}
+	answer.ID = newAnswer.ID
+	return nil
+}
+
+func (r *questionRepo) GetAnswersByQuestion(ctx context.Context, questionID uuid.UUID, limit, offset int) ([]question.Answer, error) {
+	var answerEntities []entities.Answer
+	err := r.db.WithContext(ctx).
+		Where("question_id = ?", questionID).
+		Limit(limit).Offset(offset). // Add pagination
+		Find(&answerEntities).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get answers by question: %w", err)
+	}
+	return mappers.BatchAnswerEntityToDomain(answerEntities), nil
+}
+
+func (r *questionRepo) GetAnswersByUser(ctx context.Context, userID, surveyID uuid.UUID, limit, offset int) ([]question.Answer, error) {
+	var answerEntities []entities.Answer
+	err := r.db.WithContext(ctx).
+		Joins("JOIN questions ON answers.question_id = questions.id").
+		Where("answers.user_id = ? AND questions.survey_id = ?", userID, surveyID). // Filter by user and survey
+		Limit(limit).Offset(offset).                                                // Add pagination
+		Find(&answerEntities).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get answers by user: %w", err)
+	}
+	return mappers.BatchAnswerEntityToDomain(answerEntities), nil
+}
+
 func (r *questionRepo) GetMaxQuestionIndexBySurveyID(ctx context.Context, surveyId uuid.UUID) (uint, error) {
 	var maxIndex uint
 	query := `SELECT COALESCE(MAX(index), 0) FROM questions WHERE survey_id = $1`
@@ -79,30 +120,30 @@ func (r *questionRepo) GetMaxQuestionIndexBySurveyID(ctx context.Context, survey
 }
 
 func (r *questionRepo) GetBySurveyID(ctx context.Context, surveyID uuid.UUID) ([]*question.Question, error) {
-    var questionEntities []entities.Question
+	var questionEntities []entities.Question
 
-    err := r.db.WithContext(ctx).
-        Where("survey_id = ?", surveyID).
-        Order("index ASC").
-        Find(&questionEntities).Error
-    if err != nil {
-        return nil, err
-    }
+	err := r.db.WithContext(ctx).
+		Where("survey_id = ?", surveyID).
+		Order("index ASC").
+		Find(&questionEntities).Error
+	if err != nil {
+		return nil, err
+	}
 
-    questions := make([]*question.Question, 0, len(questionEntities))
+	questions := make([]*question.Question, 0, len(questionEntities))
 
-    for _, questionEntity := range questionEntities {
-        var questionChoices []entities.QuestionChoices
-        err = r.db.WithContext(ctx).
-            Where("question_id = ?", questionEntity.ID).
-            Find(&questionChoices).Error
-        if err != nil {
-            return nil, err
-        }
+	for _, questionEntity := range questionEntities {
+		var questionChoices []entities.QuestionChoices
+		err = r.db.WithContext(ctx).
+			Where("question_id = ?", questionEntity.ID).
+			Find(&questionChoices).Error
+		if err != nil {
+			return nil, err
+		}
 
-        questionDomain := mappers.QuestionEntityToDomain(questionEntity, questionChoices)
-        questions = append(questions, &questionDomain)
-    }
+		questionDomain := mappers.QuestionEntityToDomain(questionEntity, questionChoices)
+		questions = append(questions, &questionDomain)
+	}
 
-    return questions, nil
+	return questions, nil
 }

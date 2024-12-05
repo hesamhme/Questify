@@ -21,6 +21,8 @@ func Run(cfg config.Config, app *service.AppContainer) {
 	secret := []byte(cfg.Server.TokenSecret)
 	fmt.Println(secret)
 	//registerQuestionRoutes(api, app, secret, createGroupLogger("boards"))
+	// Register survey routes
+	registerSurveyRoutes(api, app)
 
 	log.Fatal(fiberApp.Listen(fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.HTTPPort)))
 }
@@ -30,7 +32,6 @@ func registerGlobalRoutes(router fiber.Router, app *service.AppContainer) {
 	router.Post("/register", handlers.Register(app.AuthService()))
 	router.Post("/confirm-tfa", handlers.ConfirmTFA(app.AuthService()))
 	router.Post("/login", handlers.LoginUser(app.AuthService()))
-	// router.Get("/test-email", handlers.SendTestEmail(app))
 	router.Get("/refresh", handlers.RefreshToken(app.AuthService()))
 
 }
@@ -39,6 +40,7 @@ func registerSurveyRoutes(router fiber.Router, app *service.AppContainer) {
 	router = router.Group("/survey")
 	router.Post("/question/:surveyId", handlers.CreateQuestion(app.SurveyService()))
 	router.Get("/question/:surveyId", handlers.GetQuestion(app.SurveyService()))
+	router.Post("/answer", handlers.CreateAnswer(app.SurveyService())) // Add endpoint for submitting answers
 }
 
 // func userRoleChecker() fiber.Handler {
