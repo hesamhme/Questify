@@ -71,3 +71,32 @@ func (r *userRepo) UpdateUser(ctx context.Context, user *user.User) error {
 	}
 	return nil
 }
+
+func (r *userRepo) GetUsers(ctx context.Context, page, pageSize int) ([]*user.User, int64, error) {
+	offset := (page - 1) * pageSize
+
+	var totalCount int64
+	var users []entities.User
+
+	err := r.db.WithContext(ctx).Model(&entities.User{}).Count(&totalCount).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	err = r.db.WithContext(ctx).
+		Model(&entities.User{}).
+		Limit(pageSize).
+		Offset(offset).
+		Find(&users).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	result := []*user.User{}
+	for _, u := range users {
+		domainUser := mappers.UserEntityToDomain(u)
+		result = append(result, &domainUser)
+	}
+
+	return result, totalCount, nil
+}
