@@ -3,6 +3,7 @@ package handlers
 import (
 	"Questify/api/http/handlers/presenter"
 	"Questify/internal/user"
+	"Questify/internal/wallet"
 	"Questify/service"
 	"errors"
 	"strings"
@@ -10,7 +11,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func Register(authService *service.AuthService) fiber.Handler {
+func Register(authService *service.AuthService, walletService *service.WalletService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var req presenter.RegisterRequest
 
@@ -25,8 +26,17 @@ func Register(authService *service.AuthService) fiber.Handler {
 
 		u := presenter.RegisterRequestToUser(&req)
 
+		err, id := walletService.CreateWallet(c.Context(), &wallet.Wallet{Credit: 0})
+
+		if err != nil {
+			return presenter.InternalServerError(c, err)
+		}
+
+		u.WalletID = id
+
 		err = authService.CreateUser(c.Context(), u)
 		if err != nil {
+			walletService.Delete(c.Context(), id)
 			return presenter.InternalServerError(c, err)
 		}
 

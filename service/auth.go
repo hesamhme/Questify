@@ -51,7 +51,6 @@ func (s *AuthService) CreateUser(ctx context.Context, user *user.User) error {
 	return nil
 }
 
-
 func (s *AuthService) Login(ctx context.Context, email, pass string) (*UserToken, error) {
 	fetchedUser, err := s.userOps.GetUserByEmailAndPassword(ctx, email, pass)
 	if err != nil {

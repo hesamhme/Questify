@@ -15,7 +15,8 @@ type Wallet struct {
 }
 
 type Repo interface {
-	Create(ctx context.Context, wallet *Wallet) error
+	Create(ctx context.Context, wallet *Wallet) (error, uuid.UUID)
 	Update(ctx context.Context, wallet *Wallet) error
 	GetById(ctx context.Context, Id uuid.UUID) (*Wallet, error)
+	Delete(ctx context.Context, Id uuid.UUID)
 }

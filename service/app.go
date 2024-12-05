@@ -6,6 +6,7 @@ import (
 
 	"Questify/config"
 	"Questify/internal/user"
+	"Questify/internal/wallet"
 	"Questify/pkg/adapters/storage"
 	"Questify/pkg/smtp"
 	"Questify/pkg/valuecontext"
@@ -14,11 +15,12 @@ import (
 )
 
 type AppContainer struct {
-	cfg         config.Config
-	dbConn      *gorm.DB
-	userService *UserService
-	authService *AuthService
-	smtpClient  *smtp.SMTPClient
+	cfg           config.Config
+	dbConn        *gorm.DB
+	userService   *UserService
+	authService   *AuthService
+	walletService *WalletService
+	smtpClient    *smtp.SMTPClient
 }
 
 func NewAppContainer(cfg config.Config) (*AppContainer, error) {
@@ -32,6 +34,7 @@ func NewAppContainer(cfg config.Config) (*AppContainer, error) {
 	app.setSMTPClient()
 	app.setUserService()
 	app.setAuthService()
+	app.setWalletService()
 
 	return app, nil
 }
@@ -69,6 +72,17 @@ func (a *AppContainer) setUserService() {
 		return
 	}
 	a.userService = NewUserService(user.NewOps(storage.NewUserRepo(a.dbConn), a.smtpClient)) // Inject SMTPClient
+}
+
+func (a *AppContainer) setWalletService() {
+	if a.walletService != nil {
+		return
+	}
+	a.walletService = NewWalletService(wallet.NewOps(storage.NewWalletRepo(a.dbConn)))
+}
+
+func (a *AppContainer) WalletService() *WalletService {
+	return a.walletService
 }
 
 func (a *AppContainer) mustInitDB() {

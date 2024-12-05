@@ -28,7 +28,7 @@ func (r *userRepo) Create(ctx context.Context, user *user.User) error {
 	err := r.db.WithContext(ctx).Create(&newUser).Error
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
-			return nil
+			return err
 		}
 		return err
 	}

@@ -22,17 +22,17 @@ func NewWalletRepo(db *gorm.DB) wallet.Repo {
 	}
 }
 
-func (r *walletRepo) Create(ctx context.Context, wallet *wallet.Wallet) error {
+func (r *walletRepo) Create(ctx context.Context, wallet *wallet.Wallet) (error, uuid.UUID) {
 	wl := mappers.WalletDomainToEntity(wallet)
 	err := r.db.WithContext(ctx).Create(&wl).Error
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
-			return nil
+			return nil, uuid.UUID{}
 		}
-		return err
+		return err, uuid.UUID{}
 	}
 	wallet.ID = wl.ID
-	return nil
+	return nil, wallet.ID
 
 }
 
@@ -56,4 +56,11 @@ func (r *walletRepo) GetById(ctx context.Context, id uuid.UUID) (*wallet.Wallet,
 	}
 	res := mappers.WalletEntityToDomain(w)
 	return &res, nil
+}
+
+func (r *walletRepo) Delete(ctx context.Context, id uuid.UUID) {
+	err := r.db.WithContext(ctx).Delete(&entities.Wallet{}, id).Error
+	if err != nil {
+		return
+	}
 }
