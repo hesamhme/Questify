@@ -46,7 +46,13 @@ func (o *Ops) Create(ctx context.Context, question *Question) error {
 		}
 	}
 
-	err := o.repo.Create(ctx, question)
+	maxIndex, err := o.repo.GetMaxQuestionIndexBySurveyID(ctx, question.SurveyId)
+	if err != nil {
+		return err
+	}
+	question.Index = maxIndex + 1
+
+	err = o.repo.Create(ctx, question)
 
 	if err != nil {
 		return err
@@ -56,4 +62,7 @@ func (o *Ops) Create(ctx context.Context, question *Question) error {
 
 func (o *Ops) GetByID(ctx context.Context, id uuid.UUID) (*Question, error) {
 	return o.repo.GetByID(ctx, id)
+}
+func (o *Ops) GetQuestionsBySurveyID(ctx context.Context, surveyID uuid.UUID) ([]*Question, error) {
+    return o.repo.GetBySurveyID(ctx, surveyID)
 }

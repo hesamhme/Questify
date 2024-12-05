@@ -61,3 +61,41 @@ func CreateQuestion(questionService *service.SurveyService) fiber.Handler {
 		return presenter.Created(c, "Created With ID: ", domainQuestion.ID)
 	}
 }
+
+func GetQuestion(questionService *service.SurveyService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		surveyID := c.Params("surveyId")
+		if surveyID == "" {
+			return c.Status(fiber.StatusBadRequest).SendString("Survey ID is required")
+		}
+
+		surveyUUID, err := uuid.Parse(surveyID)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("Invalid Survey ID format")
+		}
+
+		userID := c.Locals("userID").(string)
+		if userID == "" {
+			return c.Status(fiber.StatusUnauthorized).SendString("User not authenticated")
+		}
+
+		question, err := questionService.GetNextQuestion(c.Context(), surveyUUID, userID)
+		if err != nil {
+			switch err {
+			case qt.ErrSurveyNotFound:
+				return c.Status(fiber.StatusNotFound).SendString("Survey not found")
+			case qt.ErrNoMoreQuestionsForThisSurvey:
+				return c.Status(fiber.StatusNotFound).SendString("No more questions available")
+			default:
+				return presenter.InternalServerError(c, err)
+			}
+		}
+
+		if question == nil {
+			return c.Status(fiber.StatusNotFound).SendString("No more questions available")
+		}
+
+		presentedQuestion := presenter.MapQuestionToPresenter(question)
+		return c.Status(fiber.StatusOK).JSON(presentedQuestion)
+	}
+}

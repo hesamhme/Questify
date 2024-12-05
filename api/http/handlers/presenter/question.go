@@ -23,6 +23,7 @@ type Question struct {
 	Type            QuestionType     `json:"type"`
 	IsMandatory     bool             `json:"is_mandatory"`
 	QuestionChoices []QuestionChoice `json:"question_choices,omitempty"`
+	MediaURL        string           `json:"media_url,omitempty"`
 }
 
 func MapPresenterToQuestion(presenterQuestion *Question, mediaPath string, surveyId uuid.UUID) *question.Question {
@@ -53,4 +54,35 @@ func MapPresenterToQuestion(presenterQuestion *Question, mediaPath string, surve
 		QuestionChoices: &qChoices,
 		MediaPath:       mediaPath,
 	}
+}
+
+func MapQuestionToPresenter(q *question.Question) Question {
+	presentedQuestion := Question{
+		ID:          q.ID,
+		Index:       q.Index,
+		Text:        q.Text,
+		IsMandatory: q.IsMandatory,
+	}
+
+	switch q.Type {
+	case question.DESCRIPTION:
+		presentedQuestion.Type = TextQuestion
+	case question.MULTIPLE_CHOICE:
+		presentedQuestion.Type = ChoiceQuestion
+		if q.QuestionChoices != nil {
+			presentedQuestion.QuestionChoices = make([]QuestionChoice, len(*q.QuestionChoices))
+			for i, choice := range *q.QuestionChoices {
+				presentedQuestion.QuestionChoices[i] = QuestionChoice{
+					ChoiceText: choice.Value,
+				}
+			}
+		}
+	}
+
+	// Check if MediaPath exists and set it to MediaURL
+	if q.MediaPath != "" {
+		presentedQuestion.MediaURL = q.MediaPath
+	}
+
+	return presentedQuestion
 }
