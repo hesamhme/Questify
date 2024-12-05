@@ -2,6 +2,7 @@ package question
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -13,9 +14,21 @@ type Repo interface {
 
 	// New methods for Answer
 	CreateAnswer(ctx context.Context, answer *Answer) error
-	GetAnswersByQuestion(ctx context.Context, questionID uuid.UUID, limit, offset int) ([]Answer, error) // Updated
-    GetAnswersByUser(ctx context.Context, userID, surveyID uuid.UUID, limit, offset int) ([]Answer, error) // Updated
+	GetAnswersByQuestion(ctx context.Context, questionID uuid.UUID, limit, offset int) ([]Answer, error)   // Updated
+	GetAnswersByUser(ctx context.Context, userID, surveyID uuid.UUID, limit, offset int) ([]Answer, error) // Updated
+	GetBySurveyID(ctx context.Context, surveyID uuid.UUID) ([]*Question, error)
+	GetMaxQuestionIndexBySurveyID(ctx context.Context, surveyId uuid.UUID) (uint, error)
 }
+
+var (
+	ErrSurveyNotFound                                     = errors.New("survey not found")
+	ErrSurveyIdIsRequired                                 = errors.New("survey Id Is required")
+	ErrQuestionMultipleChoiceOptionsIsEmpty               = errors.New("multiple Choice question should has list of question options")
+	ErrQuestionDescriptionShouldNotHaveMultipleChoiceList = errors.New("descriptiob question should not contain list of question options")
+	ErrQuestionMultipleChoiceItemsCountGreaterThanOne     = errors.New("Question Choices should be greater that 1")
+	ErrDuplicateValueForQuestionChoicesNotAllowed         = errors.New("duplicate choice values are not allowed")
+	ErrNoMoreQuestionsForThisSurvey                       = errors.New("no more questions available")
+)
 
 type QuestionType int
 
@@ -32,7 +45,7 @@ type Question struct {
 	Type            QuestionType
 	IsMandatory     bool
 	MediaPath       string
-	QuestionChoices *[]QuestionChoice // todo: make it pointer to handle nil ops
+	QuestionChoices *[]QuestionChoice
 }
 
 type QuestionChoice struct {

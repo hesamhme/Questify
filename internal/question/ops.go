@@ -16,10 +16,44 @@ func NewOps(repo Repo) *Ops {
 }
 
 func (o *Ops) Create(ctx context.Context, question *Question) error {
+	if question.SurveyId == uuid.Nil {
+		return ErrSurveyIdIsRequired
+	}
 
-	//TODO: Validate question
+	if data, err := o.repo.GetBySurveyID(ctx, question.SurveyId); err != nil || len(data) <= 0 {
+		return ErrSurveyNotFound
+	}
 
-	err := o.repo.Create(ctx, question)
+	if question.Type == DESCRIPTION && len(*question.QuestionChoices) > 0 {
+		return ErrQuestionDescriptionShouldNotHaveMultipleChoiceList
+	}
+
+	if question.Type == MULTIPLE_CHOICE {
+		if len(*question.QuestionChoices) <= 0 {
+			return ErrQuestionMultipleChoiceOptionsIsEmpty
+		}
+
+		if len(*question.QuestionChoices) <= 1 {
+			return ErrQuestionMultipleChoiceItemsCountGreaterThanOne
+		}
+
+		seenValues := make(map[string]bool)
+		for _, choice := range *question.QuestionChoices {
+			if seenValues[choice.Value] {
+				return ErrDuplicateValueForQuestionChoicesNotAllowed
+			}
+			seenValues[choice.Value] = true
+		}
+	}
+
+	maxIndex, err := o.repo.GetMaxQuestionIndexBySurveyID(ctx, question.SurveyId)
+	if err != nil {
+		return err
+	}
+	question.Index = maxIndex + 1
+
+	err = o.repo.Create(ctx, question)
+
 	if err != nil {
 		return err
 	}
@@ -41,7 +75,6 @@ func (o *Ops) CreateAnswer(ctx context.Context, answer *Answer) error {
 	return nil
 }
 
-
 // GetAnswersByQuestion retrieves all answers for a specific question with pagination
 func (o *Ops) GetAnswersByQuestion(ctx context.Context, questionID uuid.UUID, limit, offset int) ([]Answer, error) {
 	answers, err := o.repo.GetAnswersByQuestion(ctx, questionID, limit, offset)
@@ -58,4 +91,9 @@ func (o *Ops) GetAnswersByUser(ctx context.Context, userID, surveyID uuid.UUID, 
 		return nil, fmt.Errorf("failed to get answers by user: %w", err)
 	}
 	return answers, nil
+}
+
+func (o *Ops) GetQuestionsBySurveyID(ctx context.Context, surveyID uuid.UUID) ([]*Question, error) {
+	return o.repo.GetBySurveyID(ctx, surveyID)
+
 }

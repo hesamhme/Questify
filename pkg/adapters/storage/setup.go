@@ -49,7 +49,9 @@ func Migrate(db *gorm.DB) error {
 		&entities.SurveyRequirements{},
 		&entities.City{},
 		&entities.Question{},
+
 		&entities.Answer{},
-		// &entities.QuestionMultipleChoices{},
-		)
+		&entities.QuestionChoices{},
+	)
+
 }

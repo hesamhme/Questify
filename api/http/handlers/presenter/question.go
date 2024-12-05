@@ -20,14 +20,14 @@ type QuestionChoice struct {
 type Question struct {
 	ID              uuid.UUID        `json:"id"`
 	Index           uint             `json:"index"`
-	SurveyId        uuid.UUID        `json:"survey_id"`
 	Text            string           `json:"text"`
 	Type            QuestionType     `json:"type"`
 	IsMandatory     bool             `json:"is_mandatory"`
 	QuestionChoices []QuestionChoice `json:"question_choices,omitempty"`
+	MediaURL        string           `json:"media_url,omitempty"`
 }
 
-func MapPresenterToQuestion(presenterQuestion *Question, mediaPath string) *question.Question {
+func MapPresenterToQuestion(presenterQuestion *Question, mediaPath string, surveyId uuid.UUID) *question.Question {
 	var qType question.QuestionType
 	switch presenterQuestion.Type {
 	case TextQuestion:
@@ -47,13 +47,14 @@ func MapPresenterToQuestion(presenterQuestion *Question, mediaPath string) *ques
 
 	// Fix: Wrap qChoices as a pointer
 	return &question.Question{
-		ID:              presenterQuestion.ID,
-		Index:           presenterQuestion.Index,
-		SurveyId:        presenterQuestion.SurveyId,
-		Text:            presenterQuestion.Text,
-		Type:            qType,
-		IsMandatory:     presenterQuestion.IsMandatory,
-		QuestionChoices: &qChoices, // Pointer to slice ba ejaze ARYA jan :D
+		ID:          presenterQuestion.ID,
+		Index:       presenterQuestion.Index,
+		SurveyId:    surveyId,
+		Text:        presenterQuestion.Text,
+		Type:        qType,
+		IsMandatory: presenterQuestion.IsMandatory,
+
+		QuestionChoices: &qChoices,
 		MediaPath:       mediaPath,
 	}
 }
@@ -72,4 +73,35 @@ func MapPresenterToAnswer(presenterAnswer *Answer) *question.Answer {
 		UserID:     presenterAnswer.UserID,
 		Response:   presenterAnswer.Response,
 	}
+}
+
+func MapQuestionToPresenter(q *question.Question) Question {
+	presentedQuestion := Question{
+		ID:          q.ID,
+		Index:       q.Index,
+		Text:        q.Text,
+		IsMandatory: q.IsMandatory,
+	}
+
+	switch q.Type {
+	case question.DESCRIPTION:
+		presentedQuestion.Type = TextQuestion
+	case question.MULTIPLE_CHOICE:
+		presentedQuestion.Type = ChoiceQuestion
+		if q.QuestionChoices != nil {
+			presentedQuestion.QuestionChoices = make([]QuestionChoice, len(*q.QuestionChoices))
+			for i, choice := range *q.QuestionChoices {
+				presentedQuestion.QuestionChoices[i] = QuestionChoice{
+					ChoiceText: choice.Value,
+				}
+			}
+		}
+	}
+
+	// Check if MediaPath exists and set it to MediaURL
+	if q.MediaPath != "" {
+		presentedQuestion.MediaURL = q.MediaPath
+	}
+
+	return presentedQuestion
 }

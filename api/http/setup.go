@@ -30,13 +30,16 @@ func Run(cfg config.Config, app *service.AppContainer) {
 func registerGlobalRoutes(router fiber.Router, app *service.AppContainer) {
 	//router.Use(loggerMiddleWare)
 	router.Post("/register", handlers.Register(app.AuthService()))
+	router.Post("/confirm-tfa", handlers.ConfirmTFA(app.AuthService()))
 	router.Post("/login", handlers.LoginUser(app.AuthService()))
 	router.Get("/refresh", handlers.RefreshToken(app.AuthService()))
+
 }
 
 func registerSurveyRoutes(router fiber.Router, app *service.AppContainer) {
 	router = router.Group("/survey")
-	router.Post("/question", handlers.CreateQuestion(app.SurveyService()))
+	router.Post("/question/:surveyId", handlers.CreateQuestion(app.SurveyService()))
+	router.Get("/question/:surveyId", handlers.GetQuestion(app.SurveyService()))
 	router.Post("/answer", handlers.CreateAnswer(app.SurveyService())) // Add endpoint for submitting answers
 }
 
