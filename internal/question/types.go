@@ -2,6 +2,7 @@ package question
 
 import (
 	"context"
+	"errors"
 	"github.com/google/uuid"
 )
 
@@ -9,6 +10,15 @@ type Repo interface {
 	Create(ctx context.Context, question *Question) error
 	GetByID(ctx context.Context, id uuid.UUID) (*Question, error)
 }
+
+var (
+	ErrSurveyNotFound                                     = errors.New("survey not found")
+	ErrSurveyIdIsRequired                                 = errors.New("Survey Id Is required")
+	ErrQuestionMultipleChoiceOptionsIsEmpty               = errors.New("Multiple Choice question should has list of question options")
+	ErrQuestionDescriptionShouldNotHaveMultipleChoiceList = errors.New("Descriptiob question should not contain list of question options")
+	ErrQuestionMultipleChoiceItemsCountGreaterThanOne     = errors.New("Question Choices should be greater that 1")
+	ErrDuplicateValueForQuestionChoicesNotAllowed         = errors.New("duplicate choice values are not allowed")
+)
 
 type QuestionType int
 
@@ -25,7 +35,7 @@ type Question struct {
 	Type            QuestionType
 	IsMandatory     bool
 	MediaPath       string
-	QuestionChoices *[]QuestionChoice // todo: make it pointer to handle nil ops
+	QuestionChoices *[]QuestionChoice
 }
 
 type QuestionChoice struct {

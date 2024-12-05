@@ -15,9 +15,39 @@ func NewOps(repo Repo) *Ops {
 
 func (o *Ops) Create(ctx context.Context, question *Question) error {
 
-	//TODO: Validate question
+	if question.SurveyId == uuid.Nil {
+		return ErrSurveyIdIsRequired
+	}
+
+	//TODO: Validate survey is exist!
+	// if data, err := o.repo.GetBySurveyByID; err != nil {
+	//	return ErrSurveyNotFound
+	//}
+
+	if question.Type == DESCRIPTION && len(*question.QuestionChoices) > 0 {
+		return ErrQuestionDescriptionShouldNotHaveMultipleChoiceList
+	}
+
+	if question.Type == MULTIPLE_CHOICE {
+		if len(*question.QuestionChoices) <= 0 {
+			return ErrQuestionMultipleChoiceOptionsIsEmpty
+		}
+
+		if len(*question.QuestionChoices) <= 1 {
+			return ErrQuestionMultipleChoiceItemsCountGreaterThanOne
+		}
+
+		seenValues := make(map[string]bool)
+		for _, choice := range *question.QuestionChoices {
+			if seenValues[choice.Value] {
+				return ErrDuplicateValueForQuestionChoicesNotAllowed
+			}
+			seenValues[choice.Value] = true
+		}
+	}
 
 	err := o.repo.Create(ctx, question)
+
 	if err != nil {
 		return err
 	}

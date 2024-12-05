@@ -19,14 +19,13 @@ type QuestionChoice struct {
 type Question struct {
 	ID              uuid.UUID        `json:"id"`
 	Index           uint             `json:"index"`
-	SurveyId        uuid.UUID        `json:"survey_id"`
 	Text            string           `json:"text"`
 	Type            QuestionType     `json:"type"`
 	IsMandatory     bool             `json:"is_mandatory"`
 	QuestionChoices []QuestionChoice `json:"question_choices,omitempty"`
 }
 
-func MapPresenterToQuestion(presenterQuestion *Question, mediaPath string) *question.Question {
+func MapPresenterToQuestion(presenterQuestion *Question, mediaPath string, surveyId uuid.UUID) *question.Question {
 	var qType question.QuestionType
 	switch presenterQuestion.Type {
 	case TextQuestion:
@@ -47,11 +46,11 @@ func MapPresenterToQuestion(presenterQuestion *Question, mediaPath string) *ques
 	return &question.Question{
 		ID:              presenterQuestion.ID,
 		Index:           presenterQuestion.Index,
-		SurveyId:        presenterQuestion.SurveyId,
+		SurveyId:        surveyId,
 		Text:            presenterQuestion.Text,
 		Type:            qType,
 		IsMandatory:     presenterQuestion.IsMandatory,
-		QuestionChoices: qChoices,
+		QuestionChoices: &qChoices,
 		MediaPath:       mediaPath,
 	}
 }

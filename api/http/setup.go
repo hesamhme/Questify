@@ -34,7 +34,7 @@ func registerGlobalRoutes(router fiber.Router, app *service.AppContainer) {
 
 func registerSurveyRoutes(router fiber.Router, app *service.AppContainer) {
 	router = router.Group("/survey")
-	router.Post("/question", handlers.CreateQuestion(app.SurveyService()))
+	router.Post("/question/:surveyId", handlers.CreateQuestion(app.SurveyService()))
 }
 
 // func userRoleChecker() fiber.Handler {
