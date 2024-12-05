@@ -14,7 +14,6 @@ func UserEntityToDomain(entity entities.User) user.User {
 		NationalCode: entity.NationalCode,
 		TfaCode:      entity.TfaCode,
 		TfaExpiresAt: entity.TfaExpiresAt,
-		WalletID:     entity.WalletID,
 	}
 }
 
@@ -29,6 +28,5 @@ func UserDomainToEntity(domainUser *user.User) *entities.User {
 		NationalCode: domainUser.NationalCode,
 		TfaCode:      domainUser.TfaCode,
 		TfaExpiresAt: domainUser.TfaExpiresAt,
-		WalletID:     domainUser.WalletID,
 	}
 }

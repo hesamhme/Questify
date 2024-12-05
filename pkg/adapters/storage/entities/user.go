@@ -16,5 +16,4 @@ type User struct {
 	Role         string    `gorm:"default:user"`
 	CreatedAt    time.Time `gorm:"autoCreateTime"` // Auto set creation time
 	UpdatedAt    time.Time `gorm:"autoUpdateTime"` // Auto set update time
-	WalletID     uuid.UUID `gorm:"foreignKey:WalletID;OnDelete:CASCADE"`
 }

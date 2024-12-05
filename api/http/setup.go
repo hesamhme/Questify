@@ -27,14 +27,12 @@ func Run(cfg config.Config, app *service.AppContainer) {
 
 func registerGlobalRoutes(router fiber.Router, app *service.AppContainer) {
 	//router.Use(loggerMiddleWare)
-	router.Post("/register", handlers.Register(app.AuthService(), app.WalletService()))
+	router.Post("/register", handlers.Register(app.AuthService()))
 	router.Post("/confirm-tfa", handlers.ConfirmTFA(app.AuthService()))
 	router.Post("/login", handlers.LoginUser(app.AuthService()))
 	// router.Get("/test-email", handlers.SendTestEmail(app))
 	router.Get("/refresh", handlers.RefreshToken(app.AuthService()))
-	// router.Get("/profile/<:id>/wallet", handlers.ShowBalance)
-	router.Post("/profile/wallet/transfer", handlers.TransferFunds)
-	router.Post("/profile/wallet/deposit", handlers.DepositFunds)
+
 }
 
 // func userRoleChecker() fiber.Handler {

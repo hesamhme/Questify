@@ -19,6 +19,7 @@ func AddExtension(db *gorm.DB) error {
 	return db.Exec(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`).Error
 }
 
+
 func Migrate(db *gorm.DB) error {
 	migrator := db.Migrator()
 
@@ -42,12 +43,7 @@ func Migrate(db *gorm.DB) error {
 		}
 	}
 
-	if !migrator.HasTable(&entities.Wallet{}) {
-		if err := migrator.CreateTable(&entities.Wallet{}); err != nil {
-			return err
-		}
-	}
-
 	// Perform other migrations
-	return migrator.AutoMigrate(&entities.User{}, &entities.Wallet{})
+	return migrator.AutoMigrate(&entities.User{})
 }
+

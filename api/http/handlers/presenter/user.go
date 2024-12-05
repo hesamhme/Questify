@@ -23,7 +23,7 @@ func RegisterRequestToUser(registerrequest *RegisterRequest) *user.User {
 
 }
 
-type UserLoginReq struct {
-	Email    string `json:"email"`
+type UserLoginReq struct{
+	Email string  `json:"email"`
 	Password string `json:"password"`
 }
