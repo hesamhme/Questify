@@ -2,8 +2,10 @@ package storage
 
 import (
 	"Questify/internal/wallet"
+	"Questify/pkg/adapters/storage/entities"
 	"Questify/pkg/adapters/storage/mappers"
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/google/uuid"
@@ -35,9 +37,23 @@ func (r *walletRepo) Create(ctx context.Context, wallet *wallet.Wallet) error {
 }
 
 func (r *walletRepo) Update(ctx context.Context, wallet *wallet.Wallet) error {
+	w := mappers.WalletDomainToEntity(wallet)
+	err := r.db.WithContext(ctx).Model(&entities.Wallet{}).Where("id = ?", wallet.ID).Updates(w).Error
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func (r *walletRepo) GetById(ctx context.Context, id uuid.UUID) (*wallet.Wallet, error) {
-	return nil, nil
+	var w entities.Wallet
+	err := r.db.WithContext(ctx).Model(&entities.Wallet{}).Where("id = ?", id).First(&w).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	res := mappers.WalletEntityToDomain(w)
+	return &res, nil
 }
