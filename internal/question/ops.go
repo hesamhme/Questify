@@ -14,15 +14,13 @@ func NewOps(repo Repo) *Ops {
 }
 
 func (o *Ops) Create(ctx context.Context, question *Question) error {
-
 	if question.SurveyId == uuid.Nil {
 		return ErrSurveyIdIsRequired
 	}
 
-	//TODO: Validate survey is exist!
-	// if data, err := o.repo.GetBySurveyByID; err != nil {
-	//	return ErrSurveyNotFound
-	//}
+	if data, err := o.repo.GetBySurveyID(ctx, question.SurveyId); err != nil || len(data) <= 0 {
+		return ErrSurveyNotFound
+	}
 
 	if question.Type == DESCRIPTION && len(*question.QuestionChoices) > 0 {
 		return ErrQuestionDescriptionShouldNotHaveMultipleChoiceList
@@ -64,5 +62,5 @@ func (o *Ops) GetByID(ctx context.Context, id uuid.UUID) (*Question, error) {
 	return o.repo.GetByID(ctx, id)
 }
 func (o *Ops) GetQuestionsBySurveyID(ctx context.Context, surveyID uuid.UUID) ([]*Question, error) {
-    return o.repo.GetBySurveyID(ctx, surveyID)
+	return o.repo.GetBySurveyID(ctx, surveyID)
 }
