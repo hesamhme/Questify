@@ -16,11 +16,11 @@ import (
 )
 
 type AppContainer struct {
-	cfg         config.Config
-	dbConn      *gorm.DB
-	userService *UserService
-	authService *AuthService
-	smtpClient  *smtp.SMTPClient
+	cfg           config.Config
+	dbConn        *gorm.DB
+	userService   *UserService
+	authService   *AuthService
+	smtpClient    *smtp.SMTPClient
 	surveyService *SurveyService
 }
 
@@ -109,18 +109,6 @@ func (a *AppContainer) setAuthService() {
 		a.cfg.Server.RefreshTokenExpMinutes)
 }
 
-func (a *AppContainer) setSMTPClient() {
-	if a.smtpClient != nil {
-		return
-	}
-
-	a.smtpClient = smtp.NewSMTPClient(a.cfg.SMTP)
-}
-
-func (a *AppContainer) SMTPClient() *smtp.SMTPClient {
-	return a.smtpClient
-}
-
 func (a *AppContainer) SurveyService() *SurveyService {
 	return a.surveyService
 }
@@ -147,7 +135,6 @@ func (a *AppContainer) setSMTPClient() {
 func (a *AppContainer) SMTPClient() *smtp.SMTPClient {
 	return a.smtpClient
 }
-
 
 func (s *SurveyService) CreateAnswer(ctx context.Context, answer *question.Answer) error {
 	return s.questionOps.CreateAnswer(ctx, answer)
