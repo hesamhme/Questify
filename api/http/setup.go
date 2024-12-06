@@ -4,6 +4,7 @@ import (
 	"Questify/api/http/handlers"
 	middlewares "Questify/api/http/middlerwares"
 	"Questify/config"
+	"Questify/pkg/adapters"
 	"Questify/service"
 	"fmt"
 	"log"
@@ -17,8 +18,9 @@ func Run(cfg config.Config, app *service.AppContainer) {
 	api := fiberApp.Group("/api/v1", middlewares.SetUserContext())
 
 	// register global routes
-	registerGlobalRoutes(api, app)
 	secret := []byte(cfg.Server.TokenSecret)
+	registerGlobalRoutes(api, app)
+
 	registerUserRoutes(api, app, secret)
 	//registerQuestionRoutes(api, app, secret, createGroupLogger("boards"))
 
@@ -28,6 +30,10 @@ func Run(cfg config.Config, app *service.AppContainer) {
 func registerGlobalRoutes(router fiber.Router, app *service.AppContainer) {
 	//router.Use(loggerMiddleWare)
 	router.Post("/register", handlers.Register(app.AuthService()))
+	router.Post("/sign-up",
+		middlewares.SetTransaction(adapters.NewGormCommitter(app.RawRBConnection())),
+		handlers.SignUpUser(app.AuthServiceFromCtx),
+	)
 	router.Post("/confirm-tfa", handlers.ConfirmTFA(app.AuthService()))
 	router.Post("/login", handlers.LoginUser(app.AuthService()))
 	// router.Get("/test-email", handlers.SendTestEmail(app))
