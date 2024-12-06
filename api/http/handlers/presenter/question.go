@@ -54,8 +54,8 @@ func MapPresenterToQuestion(presenterQuestion *Question, mediaPath string, surve
 		Type:        qType,
 		IsMandatory: presenterQuestion.IsMandatory,
 
-		QuestionChoices: &qChoices,
-		MediaPath:       mediaPath,
+		//QuestionChoices: &qChoices,
+		MediaPath: mediaPath,
 	}
 }
 

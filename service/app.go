@@ -2,6 +2,7 @@ package service
 
 import (
 	"Questify/internal/question"
+	"Questify/internal/survey"
 	"context"
 	"log"
 
@@ -120,16 +121,31 @@ func (a *AppContainer) SMTPClient() *smtp.SMTPClient {
 	return a.smtpClient
 }
 
+func (a *AppContainer) SurveyService() *SurveyService {
+	return a.surveyService
+}
+
 func (a *AppContainer) setSurveyService() {
 	if a.surveyService != nil {
 		return
 	}
 
-	a.surveyService = NewSurveyService(question.NewOps(storage.NewQuestionRepo(a.dbConn)))
+	a.surveyService = NewSurveyService(
+		question.NewOps(storage.NewQuestionRepo(a.dbConn)),
+		survey.NewOps(storage.NewSurveyRepo(a.dbConn)),
+	)
 }
 
-func (a *AppContainer) SurveyService() *SurveyService {
-	return a.surveyService
+func (a *AppContainer) setSMTPClient() {
+	if a.smtpClient != nil {
+		return
+	}
+
+	a.smtpClient = smtp.NewSMTPClient(a.cfg.SMTP)
+}
+
+func (a *AppContainer) SMTPClient() *smtp.SMTPClient {
+	return a.smtpClient
 }
 
 

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"Questify/api/http/handlers/presenter"
+	"Questify/internal/survey"
 	qt "Questify/internal/question"
 	"Questify/service"
 
@@ -60,6 +61,24 @@ func CreateQuestion(questionService *service.SurveyService) fiber.Handler {
 		}
 
 		return presenter.Created(c, "Created With ID: ", domainQuestion.ID)
+	}
+}
+
+func CreateSurvey(surveyService *survey.Ops) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var surveyReq presenter.Survey
+		if err := c.BodyParser(&surveyReq); err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("Invalid request body")
+		}
+
+		domainSurvey := presenter.MapPresenterToSurvey(&surveyReq)
+
+		err := surveyService.Create(c.Context(), domainSurvey)
+		if err != nil {
+			return presenter.InternalServerError(c, err)
+		}
+
+		return presenter.Created(c, "Created Survey with ID: ", domainSurvey.ID)
 	}
 }
 
