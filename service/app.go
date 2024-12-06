@@ -116,3 +116,22 @@ func (a *AppContainer) setSMTPClient() {
 func (a *AppContainer) SMTPClient() *smtp.SMTPClient {
 	return a.smtpClient
 }
+
+func (a *AppContainer) AuthServiceFromCtx(ctx context.Context) *AuthService {
+	tx, ok := valuecontext.TryGetTxFromContext(ctx)
+	if !ok {
+		return a.authService
+	}
+
+	gc, ok := tx.Tx().(*gorm.DB)
+	if !ok {
+		return a.authService
+	}
+
+	return NewAuthService(
+		user.NewOps(storage.NewUserRepo(gc), a.smtpClient),
+		[]byte(a.cfg.Server.TokenSecret),
+		a.cfg.Server.TokenExpMinutes,
+		a.cfg.Server.RefreshTokenExpMinutes)
+		// walletOps should be here
+}

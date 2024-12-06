@@ -2,6 +2,7 @@ package presenter
 
 import (
 	"Questify/internal/user"
+	"Questify/pkg/fp"
 
 	"github.com/google/uuid"
 )
@@ -26,4 +27,20 @@ func RegisterRequestToUser(registerrequest *RegisterRequest) *user.User {
 type UserLoginReq struct{
 	Email string  `json:"email"`
 	Password string `json:"password"`
+}
+
+type UserGet struct {
+	ID       uuid.UUID `json:"user_id"`
+	Email    string    `json:"email"`
+}
+
+func UserToUserGet(user user.User) UserGet {
+	return UserGet{
+		ID:       user.ID,
+		Email:    user.Email,
+	}
+}
+
+func BatchUsersToUserGet(users []user.User) []UserGet {
+	return fp.Map(users, UserToUserGet)
 }

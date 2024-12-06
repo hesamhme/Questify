@@ -14,9 +14,9 @@ import (
 
 const UserClaimKey = jwt.UserClaimKey
 
-// var (
-// 	errWrongClaimType = errors.New("wrong claim type")
-// )
+var (
+	errWrongClaimType = errors.New("wrong claim type")
+)
 
 type ServiceFactory[T any] func(context.Context) T
 

@@ -27,6 +27,8 @@ var (
 	ErrPasswordMissingUpper  = errors.New("password must include at least one uppercase letter")
 	ErrPasswordMissingLower  = errors.New("password must include at least one lowercase letter")
 	ErrPasswordMissingSymbol = errors.New("password must include at least one special character (!@#$%^&*)")
+	ErrInvalidPagination     = errors.New("invalid pagination parameters")
+	ErrFailedToGetUsers      = errors.New("failed to get users")
 )
 
 type Repo interface {
@@ -34,6 +36,7 @@ type Repo interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*User, error)
 	GetByEmail(ctx context.Context, email string) (*User, error)
 	UpdateUser(ctx context.Context, user *User) error // New method for updating the user
+	GetUsers(ctx context.Context, page, pageSize int) ([]User, int64, error)
 }
 
 type User struct {
