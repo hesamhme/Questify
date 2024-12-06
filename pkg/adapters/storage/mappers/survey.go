@@ -20,8 +20,8 @@ func SurveyEntityToDomain(entity entities.Survey) survey.Survey {
 	}
 }
 
-func SurveyDomainToEntity(domain *survey.Survey) entities.Survey {
-	return entities.Survey{
+func SurveyDomainToEntity(domain *survey.Survey) *entities.Survey {
+	return &entities.Survey{
 		ID:                 domain.ID,
 		Title:              domain.Title,
 		OwnerID:            domain.OwnerID,

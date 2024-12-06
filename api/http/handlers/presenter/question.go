@@ -9,12 +9,13 @@ import (
 type QuestionType string
 
 const (
-	TextQuestion   QuestionType = "text"
-	ChoiceQuestion QuestionType = "choice"
+	TextQuestion   QuestionType = "description"
+	ChoiceQuestion QuestionType = "multi-choice"
 )
 
 type QuestionChoice struct {
 	ChoiceText string `json:"choice_text"`
+	IsAnswer   bool   `json:"is_answer"`
 }
 
 type Question struct {
@@ -41,36 +42,31 @@ func MapPresenterToQuestion(presenterQuestion *Question, mediaPath string, surve
 	var qChoices []question.QuestionChoice
 	for _, qc := range presenterQuestion.QuestionChoices {
 		qChoices = append(qChoices, question.QuestionChoice{
-			Value: qc.ChoiceText,
+			Value:    qc.ChoiceText,
+			IsAnswer: qc.IsAnswer,
 		})
 	}
 
-	// Fix: Wrap qChoices as a pointer
 	return &question.Question{
-		ID:          presenterQuestion.ID,
-		Index:       presenterQuestion.Index,
-		SurveyId:    surveyId,
-		Text:        presenterQuestion.Text,
-		Type:        qType,
-		IsMandatory: presenterQuestion.IsMandatory,
-
-		//QuestionChoices: &qChoices,
-		MediaPath: mediaPath,
+		ID:              presenterQuestion.ID,
+		Index:           presenterQuestion.Index,
+		SurveyId:        surveyId,
+		Text:            presenterQuestion.Text,
+		Type:            qType,
+		IsMandatory:     presenterQuestion.IsMandatory,
+		QuestionChoices: &qChoices,
+		MediaPath:       mediaPath,
 	}
 }
 
 type Answer struct {
-	ID         uuid.UUID `json:"id"`
-	QuestionID uuid.UUID `json:"question_id"`
-	UserID     uuid.UUID `json:"user_id"`
-	Response   string    `json:"response"`
+	Response string `json:"response"`
 }
 
-func MapPresenterToAnswer(presenterAnswer *Answer) *question.Answer {
+func MapPresenterToAnswer(presenterAnswer *Answer, questionId uuid.UUID, userId uuid.UUID) *question.Answer {
 	return &question.Answer{
-		ID:         presenterAnswer.ID,
-		QuestionID: presenterAnswer.QuestionID,
-		UserID:     presenterAnswer.UserID,
+		QuestionID: questionId,
+		UserID:     userId,
 		Response:   presenterAnswer.Response,
 	}
 }
@@ -93,6 +89,7 @@ func MapQuestionToPresenter(q *question.Question) Question {
 			for i, choice := range *q.QuestionChoices {
 				presentedQuestion.QuestionChoices[i] = QuestionChoice{
 					ChoiceText: choice.Value,
+					IsAnswer:   choice.IsAnswer,
 				}
 			}
 		}

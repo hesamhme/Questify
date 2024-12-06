@@ -21,5 +21,5 @@ type Survey struct {
 	IsCanceled         bool
 	AllowBack          bool
 	ParticipationLimit uint
-	ResponseTimeLimit  time.Duration
+	ResponseTimeLimit  int64
 }

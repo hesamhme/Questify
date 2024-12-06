@@ -10,7 +10,7 @@ import (
 func QuestionEntityToDomain(entity entities.Question, questionChoices []entities.QuestionChoices) question.Question {
 
 	choices := BatchQuestionChoiceEntityToDomain(questionChoices)
-	
+
 	return question.Question{
 		ID:              entity.ID,
 		Index:           entity.Index,
@@ -42,13 +42,18 @@ func QuestionDomainToEntity(domainQuestion *question.Question) (*entities.Questi
 		SurveyID:    domainQuestion.SurveyId,
 		Survey:      entities.Survey{},
 		Text:        domainQuestion.Text,
-		Type:        uint8(domainQuestion.Type),
+		Type:        uint(domainQuestion.Type),
 		IsMandatory: domainQuestion.IsMandatory,
 		MediaPath:   domainQuestion.MediaPath,
 		CreatedAt:   time.Now(),
 	}
 
+	if domainQuestion.QuestionChoices == nil {
+		return &questionEntity, nil
+	}
+
 	questionChoiceEntities := make([]entities.QuestionChoices, 0)
+
 	for _, questionChoice := range *domainQuestion.QuestionChoices {
 		questionChoiceEntities = append(questionChoiceEntities, QuestionChoiceDomainToEntity(questionChoice, &questionEntity))
 	}
@@ -60,12 +65,11 @@ func QuestionChoiceDomainToEntity(domain question.QuestionChoice, entityQuestion
 	return entities.QuestionChoices{
 		ID:         domain.ID,
 		QuestionID: entityQuestion.ID,
-		Question:   *entityQuestion,
+		Question:   entities.Question{},
 		Value:      domain.Value,
 		IsAnswer:   domain.IsAnswer,
 	}
 }
-
 
 func AnswerEntityToDomain(entity entities.Answer) question.Answer {
 	return question.Answer{
@@ -86,7 +90,6 @@ func AnswerDomainToEntity(domain question.Answer) entities.Answer {
 		CreatedAt:  domain.CreatedAt,
 	}
 }
-
 
 func BatchAnswerEntityToDomain(entities []entities.Answer) []question.Answer {
 	var domainAnswers []question.Answer

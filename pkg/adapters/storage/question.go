@@ -27,19 +27,31 @@ func NewQuestionRepo(db *gorm.DB) question.Repo {
 // Create creates a new question along with its choices
 func (r *questionRepo) Create(ctx context.Context, question *question.Question) error {
 	newQuestion, newQuestionChoices := mappers.QuestionDomainToEntity(question)
-	err := r.db.Create(&newQuestion).Error
-	if err != nil {
-		if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
-			return nil
-		}
-		return err
-	}
 
-	err = r.db.Create(&newQuestionChoices).Error
-	if err != nil {
-		if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
-			return nil
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&newQuestion).Error; err != nil {
+			if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+				return nil
+			}
+			return err
 		}
+
+		if newQuestionChoices != nil {
+			for _, choice := range *newQuestionChoices {
+				choice.QuestionID = newQuestion.ID
+				if err := tx.Create(&choice).Error; err != nil {
+					if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+						continue
+					}
+					return err
+				}
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
 		return err
 	}
 

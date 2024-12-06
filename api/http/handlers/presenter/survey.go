@@ -20,18 +20,18 @@ type Survey struct {
 	ResponseTimeLimit  uint      `json:"response_time_limit"`
 }
 
-func MapPresenterToSurvey(presenterSurvey *Survey) *survey.Survey {
+func MapPresenterToSurvey(presenterSurvey *Survey, ownerId uuid.UUID) *survey.Survey {
 	return &survey.Survey{
 		ID:                 presenterSurvey.ID,
 		Title:              presenterSurvey.Title,
-		OwnerID:            presenterSurvey.OwnerID,
+		OwnerID:            ownerId,
 		StartTime:          parseTime(presenterSurvey.StartTime),
 		EndTime:            parseTime(presenterSurvey.EndTime),
 		IsRandom:           presenterSurvey.IsRandom,
 		IsCanceled:         presenterSurvey.IsCanceled,
 		AllowBack:          presenterSurvey.AllowBack,
 		ParticipationLimit: presenterSurvey.ParticipationLimit,
-		ResponseTimeLimit:  toDuration(presenterSurvey.ResponseTimeLimit),
+		ResponseTimeLimit:  int64(toDuration(presenterSurvey.ResponseTimeLimit)),
 	}
 }
 
@@ -56,6 +56,6 @@ func MapSurveyToPresenter(survey *survey.Survey) *Survey {
 		IsCanceled:         survey.IsCanceled,
 		AllowBack:          survey.AllowBack,
 		ParticipationLimit: survey.ParticipationLimit,
-		ResponseTimeLimit:  uint(survey.ResponseTimeLimit / time.Second),
+		ResponseTimeLimit:  uint(survey.ResponseTimeLimit / int64(time.Second)),
 	}
 }

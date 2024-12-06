@@ -1,9 +1,9 @@
 package middlewares
 
 import (
-	"errors"
 	"Questify/api/http/handlers"
 	"Questify/pkg/jwt"
+	"errors"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"

@@ -11,7 +11,7 @@ type Question struct {
 	SurveyID    uuid.UUID `gorm:"type:uuid;not null"`
 	Survey      Survey    `gorm:"foreignKey:SurveyID;references:ID"`
 	Text        string    `gorm:"type:text;not null"`
-	Type        uint8     `gorm:"type:bit;not null"`
+	Type        uint      `gorm:"type:smallint;not null"`
 	IsMandatory bool      `gorm:"type:boolean;not null"`
 	MediaPath   string    `gorm:"type:text;not null"`
 	CreatedAt   time.Time `gorm:"type:timestamp;not null"`

@@ -22,7 +22,7 @@ func Run(cfg config.Config, app *service.AppContainer) {
 	fmt.Println(secret)
 	//registerQuestionRoutes(api, app, secret, createGroupLogger("boards"))
 	// Register survey routes
-	registerSurveyRoutes(api, app)
+	registerSurveyRoutes(cfg, api, app)
 
 	log.Fatal(fiberApp.Listen(fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.HTTPPort)))
 }
@@ -36,12 +36,15 @@ func registerGlobalRoutes(router fiber.Router, app *service.AppContainer) {
 
 }
 
-func registerSurveyRoutes(router fiber.Router, app *service.AppContainer) {
+func registerSurveyRoutes(cfg config.Config, router fiber.Router, app *service.AppContainer) {
+	router.Use(middlewares.Auth([]byte(cfg.Server.TokenSecret)))
 	router = router.Group("/survey")
 	router.Post("", handlers.CreateSurvey(app.SurveyService()))
 	router.Post("/:surveyId", handlers.GetSurvey(app.SurveyService()))
 	router.Post("/:surveyId/question", handlers.CreateQuestion(app.SurveyService()))
-	router.Get("/:surveyId/question", handlers.GetQuestion(app.SurveyService()))
+	router.Get("/:surveyId/question/next", handlers.GetNextQuestion(app.SurveyService()))
+	router.Get("/:surveyId/question/previous", handlers.GetPreviousQuestion(app.SurveyService()))
+	router.Get("/:surveyId/question/:questionId", handlers.GetQuestion(app.SurveyService()))
 	router.Put("/:surveyId/question/:questionId", handlers.UpdateQuestion(app.SurveyService()))
 	router.Post("/question/:questionId/answer", handlers.CreateAnswer(app.SurveyService())) // Add endpoint for submitting answers
 }

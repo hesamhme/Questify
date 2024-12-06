@@ -52,6 +52,39 @@ func (s *SurveyService) ResetUserProgress(userID string) {
 	s.mu.Unlock()
 }
 
+func (s *SurveyService) GetPreviousQuestion(ctx context.Context, surveyID uuid.UUID, userID string) (*question.Question, error) {
+	resultSurvey, err := s.surveyOps.GetByID(ctx, surveyID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !resultSurvey.AllowBack {
+		return nil, fmt.Errorf("going back is not allowed for this survey")
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	currentIndex, exists := s.userProgress[userID]
+	if !exists || currentIndex == 0 {
+		return nil, fmt.Errorf("no previous questions available")
+	}
+
+	questions, err := s.questionOps.GetQuestionsBySurveyID(ctx, surveyID)
+	if err != nil {
+		return nil, err
+	}
+
+	if int(currentIndex) > len(questions) {
+		return nil, fmt.Errorf("you have reached the end of the questions")
+	}
+
+	s.userProgress[userID]--
+
+	currentIndex = s.userProgress[userID]
+	return questions[currentIndex], nil
+}
+
 func (s *SurveyService) GetQuestion(ctx context.Context, questionID uuid.UUID) (*question.Question, error) {
 	fetchedQuestion, err := s.questionOps.GetByID(ctx, questionID)
 	if err != nil {
