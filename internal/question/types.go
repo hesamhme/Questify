@@ -11,8 +11,7 @@ import (
 type Repo interface {
 	Create(ctx context.Context, question *Question) error
 	GetByID(ctx context.Context, id uuid.UUID) (*Question, error)
-
-	// New methods for Answer
+	Update(ctx context.Context, question *Question) error
 	CreateAnswer(ctx context.Context, answer *Answer) error
 	GetAnswersByQuestion(ctx context.Context, questionID uuid.UUID, limit, offset int) ([]Answer, error)   // Updated
 	GetAnswersByUser(ctx context.Context, userID, surveyID uuid.UUID, limit, offset int) ([]Answer, error) // Updated
@@ -28,6 +27,8 @@ var (
 	ErrQuestionMultipleChoiceItemsCountGreaterThanOne     = errors.New("Question Choices should be greater that 1")
 	ErrDuplicateValueForQuestionChoicesNotAllowed         = errors.New("duplicate choice values are not allowed")
 	ErrNoMoreQuestionsForThisSurvey                       = errors.New("no more questions available")
+	ErrQuestionNotFound                                   = errors.New("Question not found")
+	ErrCannotChangeSurveyId                               = errors.New("Can not change survey id")
 )
 
 type QuestionType int

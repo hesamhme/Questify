@@ -38,8 +38,11 @@ func registerGlobalRoutes(router fiber.Router, app *service.AppContainer) {
 
 func registerSurveyRoutes(router fiber.Router, app *service.AppContainer) {
 	router = router.Group("/survey")
-	router.Post("/question/:surveyId", handlers.CreateQuestion(app.SurveyService()))
-	router.Get("/question/:surveyId", handlers.GetQuestion(app.SurveyService()))
+	router.Post("", handlers.CreateSurvey(app.SurveyService()))
+	router.Post("/:surveyId", handlers.GetSurvey(app.SurveyService()))
+	router.Post("/:surveyId/question", handlers.CreateQuestion(app.SurveyService()))
+	router.Get("/:surveyId/question", handlers.GetQuestion(app.SurveyService()))
+	router.Put("/:surveyId/question/:questionId", handlers.UpdateQuestion(app.SurveyService()))
 	router.Post("/answer", handlers.CreateAnswer(app.SurveyService())) // Add endpoint for submitting answers
 }
 

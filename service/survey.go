@@ -13,13 +13,13 @@ type SurveyService struct {
 	questionOps  *question.Ops
 	userProgress map[string]uint
 	mu           sync.RWMutex
-	surveyOps   *survey.Ops
+	surveyOps    *survey.Ops
 }
 
 func NewSurveyService(questionOps *question.Ops, surveyOps *survey.Ops) *SurveyService {
 	return &SurveyService{
-		questionOps: questionOps,
-		surveyOps:   surveyOps,
+		questionOps:  questionOps,
+		surveyOps:    surveyOps,
 		userProgress: make(map[string]uint),
 	}
 }
@@ -52,14 +52,8 @@ func (s *SurveyService) ResetUserProgress(userID string) {
 	s.mu.Unlock()
 }
 
-func (s *SurveyService) GetQuestion(ctx context.Context, id string) (*question.Question, error) {
-	userId, err := uuid.Parse(id)
-	if err != nil {
-		fmt.Println("Error:", err)
-		return nil, err
-	}
-
-	fetchedQuestion, err := s.questionOps.GetByID(ctx, userId)
+func (s *SurveyService) GetQuestion(ctx context.Context, questionID uuid.UUID) (*question.Question, error) {
+	fetchedQuestion, err := s.questionOps.GetByID(ctx, questionID)
 	if err != nil {
 		return nil, err
 	}
@@ -67,18 +61,15 @@ func (s *SurveyService) GetQuestion(ctx context.Context, id string) (*question.Q
 	return fetchedQuestion, nil
 }
 
+func (s *SurveyService) UpdateQuestion(ctx context.Context, question *question.Question, questionId uuid.UUID) error {
+	return s.questionOps.Update(ctx, question, questionId)
+}
+
 func (s *SurveyService) CreateSurvey(ctx context.Context, survey *survey.Survey) error {
-	// TODO: Validate survey fields (e.g., time ranges, title length)
 	return s.surveyOps.Create(ctx, survey)
 }
 
-func (s *SurveyService) GetSurvey(ctx context.Context, id string) (*survey.Survey, error) {
-	surveyID, err := uuid.Parse(id)
-	if err != nil {
-		fmt.Println("Error parsing UUID:", err)
-		return nil, err
-	}
-
+func (s *SurveyService) GetSurvey(ctx context.Context, surveyID uuid.UUID) (*survey.Survey, error) {
 	fetchedSurvey, err := s.surveyOps.GetByID(ctx, surveyID)
 	if err != nil {
 		return nil, err

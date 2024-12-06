@@ -60,6 +60,56 @@ func (o *Ops) Create(ctx context.Context, question *Question) error {
 	return nil
 }
 
+func (o *Ops) Update(ctx context.Context, question *Question, questionId uuid.UUID) error {
+	if question.SurveyId == uuid.Nil {
+		return ErrSurveyIdIsRequired
+	}
+
+	existingQuestion, err := o.repo.GetByID(ctx, questionId)
+	if err != nil {
+		return fmt.Errorf("failed to get existing question: %w", err)
+	}
+	if existingQuestion == nil {
+		return ErrQuestionNotFound
+	}
+
+	if existingQuestion.SurveyId != question.SurveyId {
+		return ErrCannotChangeSurveyId
+	}
+
+	if question.Type == DESCRIPTION && len(*question.QuestionChoices) > 0 {
+		return ErrQuestionDescriptionShouldNotHaveMultipleChoiceList
+	}
+
+	if question.Type == MULTIPLE_CHOICE {
+		if len(*question.QuestionChoices) <= 0 {
+			return ErrQuestionMultipleChoiceOptionsIsEmpty
+		}
+
+		if len(*question.QuestionChoices) <= 1 {
+			return ErrQuestionMultipleChoiceItemsCountGreaterThanOne
+		}
+
+		seenValues := make(map[string]bool)
+		for _, choice := range *question.QuestionChoices {
+			if seenValues[choice.Value] {
+				return ErrDuplicateValueForQuestionChoicesNotAllowed
+			}
+			seenValues[choice.Value] = true
+		}
+	}
+
+	question.ID = questionId
+	question.Index = existingQuestion.Index
+
+	err = o.repo.Update(ctx, question)
+	if err != nil {
+		return fmt.Errorf("failed to update question: %w", err)
+	}
+
+	return nil
+}
+
 func (o *Ops) GetByID(ctx context.Context, id uuid.UUID) (*Question, error) {
 	return o.repo.GetByID(ctx, id)
 }

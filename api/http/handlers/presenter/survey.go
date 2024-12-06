@@ -44,3 +44,18 @@ func parseTime(timeStr string) time.Time {
 	return parsedTime
 }
 func toDuration(seconds uint) time.Duration { return time.Duration(seconds) * time.Second }
+
+func MapSurveyToPresenter(survey *survey.Survey) *Survey {
+	return &Survey{
+		ID:                 survey.ID,
+		Title:              survey.Title,
+		OwnerID:            survey.OwnerID,
+		StartTime:          survey.StartTime.Format(time.RFC3339),
+		EndTime:            survey.EndTime.Format(time.RFC3339),
+		IsRandom:           survey.IsRandom,
+		IsCanceled:         survey.IsCanceled,
+		AllowBack:          survey.AllowBack,
+		ParticipationLimit: survey.ParticipationLimit,
+		ResponseTimeLimit:  uint(survey.ResponseTimeLimit / time.Second),
+	}
+}

@@ -73,6 +73,33 @@ func (r *questionRepo) GetByID(ctx context.Context, id uuid.UUID) (*question.Que
 	return &questionDomain, nil
 }
 
+func (r *questionRepo) Update(ctx context.Context, question *question.Question) error {
+	// Convert domain model to entity
+	updatedQuestion, updatedChoices := mappers.QuestionDomainToEntity(question)
+
+	// Start a transaction
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// Update the question
+		if err := tx.Model(&entities.Question{}).Where("id = ?", updatedQuestion.ID).Updates(updatedQuestion).Error; err != nil {
+			return fmt.Errorf("failed to update question: %w", err)
+		}
+
+		// Delete existing choices
+		if err := tx.Where("question_id = ?", updatedQuestion.ID).Delete(&entities.QuestionChoices{}).Error; err != nil {
+			return fmt.Errorf("failed to delete existing choices: %w", err)
+		}
+
+		// Insert new choices
+		if len(*updatedChoices) > 0 {
+			if err := tx.Create(&updatedChoices).Error; err != nil {
+				return fmt.Errorf("failed to create new choices: %w", err)
+			}
+		}
+
+		return nil
+	})
+}
+
 // CreateAnswer adds a new answer to the database
 func (r *questionRepo) CreateAnswer(ctx context.Context, answer *question.Answer) error {
 	newAnswer := mappers.AnswerDomainToEntity(*answer)
