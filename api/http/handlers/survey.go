@@ -84,17 +84,29 @@ func CreateSurvey(surveyService *service.SurveyService) fiber.Handler {
 
 func CreateAnswer(surveyService *service.SurveyService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		questionID := c.Params("questionId")
+		if questionID == "" {
+			return c.Status(fiber.StatusBadRequest).SendString("Question ID is required")
+		}
+
+		questionUUID, err := uuid.Parse(questionID)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("Invalid Question ID format")
+		}
+
 		// Parse the request body
 		var req presenter.Answer
 		if err := c.BodyParser(&req); err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, "Invalid request payload")
 		}
 
+		req.QuestionID = questionUUID
+
 		// Map presenter answer to domain model
 		answer := presenter.MapPresenterToAnswer(&req)
 
 		// Call the service to create the answer
-		err := surveyService.CreateAnswer(c.Context(), answer)
+		err = surveyService.CreateAnswer(c.Context(), answer)
 		if err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
