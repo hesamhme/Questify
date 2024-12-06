@@ -112,7 +112,7 @@ func (o *Ops) Send2FACodeEmail(ctx context.Context, email, code string) error {
 	return o.smtp.SendEmail(email, subject, body)
 }
 
-func (o *Ops) GetUsers(ctx context.Context, page, pageSize int) ([]*User, int, error) {
+func (o *Ops) GetUsers(ctx context.Context, page, pageSize int) ([]User, int64, error) {
 	if page < 1 || pageSize < 1 {
 		return nil, 0, ErrInvalidPagination
 	}

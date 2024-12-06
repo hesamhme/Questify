@@ -36,7 +36,7 @@ type Repo interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*User, error)
 	GetByEmail(ctx context.Context, email string) (*User, error)
 	UpdateUser(ctx context.Context, user *User) error // New method for updating the user
-	GetUsers(ctx context.Context, page, pageSize int) ([]*User, int, error)
+	GetUsers(ctx context.Context, page, pageSize int) ([]User, int64, error)
 }
 
 type User struct {

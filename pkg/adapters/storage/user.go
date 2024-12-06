@@ -72,7 +72,7 @@ func (r *userRepo) UpdateUser(ctx context.Context, user *user.User) error {
 	return nil
 }
 
-func (r *userRepo) GetUsers(ctx context.Context, page, pageSize int) ([]*user.User, int64, error) {
+func (r *userRepo) GetUsers(ctx context.Context, page, pageSize int) ([]user.User, int64, error) {
 	offset := (page - 1) * pageSize
 
 	var totalCount int64
@@ -92,10 +92,10 @@ func (r *userRepo) GetUsers(ctx context.Context, page, pageSize int) ([]*user.Us
 		return nil, 0, err
 	}
 
-	result := []*user.User{}
+	result := []user.User{}
 	for _, u := range users {
 		domainUser := mappers.UserEntityToDomain(u)
-		result = append(result, &domainUser)
+		result = append(result, domainUser)
 	}
 
 	return result, totalCount, nil

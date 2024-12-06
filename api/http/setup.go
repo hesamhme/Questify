@@ -19,7 +19,7 @@ func Run(cfg config.Config, app *service.AppContainer) {
 	// register global routes
 	registerGlobalRoutes(api, app)
 	secret := []byte(cfg.Server.TokenSecret)
-	fmt.Println(secret)
+	registerUserRoutes(api, app, secret)
 	//registerQuestionRoutes(api, app, secret, createGroupLogger("boards"))
 
 	log.Fatal(fiberApp.Listen(fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.HTTPPort)))
@@ -33,6 +33,15 @@ func registerGlobalRoutes(router fiber.Router, app *service.AppContainer) {
 	// router.Get("/test-email", handlers.SendTestEmail(app))
 	router.Get("/refresh", handlers.RefreshToken(app.AuthService()))
 
+}
+
+func registerUserRoutes(router fiber.Router, app *service.AppContainer, secret []byte) {
+	router = router.Group("/users")
+
+	router.Get("",
+		middlewares.Auth(secret),
+		handlers.GetAllVerifiedUsers(app.UserService()),
+	)
 }
 
 // func userRoleChecker() fiber.Handler {
