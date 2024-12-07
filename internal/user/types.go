@@ -47,6 +47,7 @@ type User struct {
 	Role         string
 	TfaCode      string    // Temporary TFA code
 	TfaExpiresAt time.Time // Expiration time for TFA code
+	IsVerified bool
 }
 
 // IsValidIranianNationalCode validates an Iranian National Code.
