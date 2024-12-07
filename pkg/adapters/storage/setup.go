@@ -48,6 +48,12 @@ func Migrate(db *gorm.DB) error {
 		&entities.Role{},
 		&entities.Permission{},
 		&entities.UserRole{},
+		&entities.Survey{},
+		&entities.SurveyRequirements{},
+		&entities.City{},
+		&entities.Question{},
+		&entities.Answer{},
+		&entities.QuestionChoices{},
 	)
 	if err != nil {
 		return fmt.Errorf("migration failed: %w", err)
@@ -79,4 +85,5 @@ func SeedPermissions(db *gorm.DB) error {
 		}
 	}
 	return nil
+
 }

@@ -1,6 +1,8 @@
 package service
 
 import (
+	"Questify/internal/question"
+	"Questify/internal/survey"
 	"context"
 	"log"
 
@@ -21,6 +23,8 @@ type AppContainer struct {
 	authService *AuthService
 	smtpClient  *smtp.SMTPClient
 	roleService *RoleService
+	surveyService *SurveyService
+
 }
 
 func NewAppContainer(cfg config.Config) (*AppContainer, error) {
@@ -30,11 +34,12 @@ func NewAppContainer(cfg config.Config) (*AppContainer, error) {
 
 	app.mustInitDB()
 	storage.Migrate(app.dbConn)
-
 	app.setSMTPClient()
 	app.setUserService()
 	app.setAuthService()
 	app.setRoleService()
+	app.setSurveyService()
+
 
 	return app, nil
 }
@@ -121,6 +126,21 @@ func (a *AppContainer) setAuthService() {
 		a.cfg.Server.RefreshTokenExpMinutes)
 }
 
+func (a *AppContainer) SurveyService() *SurveyService {
+	return a.surveyService
+}
+
+func (a *AppContainer) setSurveyService() {
+	if a.surveyService != nil {
+		return
+	}
+
+	a.surveyService = NewSurveyService(
+		question.NewOps(storage.NewQuestionRepo(a.dbConn), storage.NewSurveyRepo(a.dbConn)),
+		survey.NewOps(storage.NewSurveyRepo(a.dbConn)),
+	)
+}
+
 func (a *AppContainer) setSMTPClient() {
 	if a.smtpClient != nil {
 		return
@@ -131,4 +151,8 @@ func (a *AppContainer) setSMTPClient() {
 
 func (a *AppContainer) SMTPClient() *smtp.SMTPClient {
 	return a.smtpClient
+}
+
+func (s *SurveyService) CreateAnswer(ctx context.Context, answer *question.Answer) error {
+	return s.questionOps.CreateAnswer(ctx, answer)
 }
