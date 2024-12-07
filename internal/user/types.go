@@ -14,7 +14,7 @@ import (
 
 var (
 	ErrUserNotFound          = errors.New("user not found")
-	ErrDuplicatedUser        = errors.New("email/national ID already exists")
+	ErrDuplicatedUserNID        = errors.New("national ID already exists")
 	ErrInvalidNationalCode   = errors.New("national code is invalid")
 	ErrInvalidEmail          = errors.New("invalid email format")
 	ErrInvalidPassword       = errors.New("invalid password format")
@@ -27,13 +27,17 @@ var (
 	ErrPasswordMissingUpper  = errors.New("password must include at least one uppercase letter")
 	ErrPasswordMissingLower  = errors.New("password must include at least one lowercase letter")
 	ErrPasswordMissingSymbol = errors.New("password must include at least one special character (!@#$%^&*)")
+	ErrInvalidPagination     = errors.New("invalid pagination parameters")
+	ErrFailedToGetUsers      = errors.New("failed to get users")
 )
 
 type Repo interface {
 	Create(ctx context.Context, user *User) error
 	GetByID(ctx context.Context, id uuid.UUID) (*User, error)
 	GetByEmail(ctx context.Context, email string) (*User, error)
-	UpdateUser(ctx context.Context, user *User) error // New method for updating the user
+	UpdateUser(ctx context.Context, user *User) error 
+	GetByNationalCode(ctx context.Context, nationalCode string) (*User, error)
+	GetUsers(ctx context.Context, page, pageSize int) ([]User, int64, error)
 }
 
 type User struct {
@@ -44,6 +48,7 @@ type User struct {
 	Role         string
 	TfaCode      string    // Temporary TFA code
 	TfaExpiresAt time.Time // Expiration time for TFA code
+	IsVerified bool
 }
 
 // IsValidIranianNationalCode validates an Iranian National Code.

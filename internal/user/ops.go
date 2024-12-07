@@ -26,13 +26,22 @@ func (o *Ops) Create(ctx context.Context, user *User) error {
 		return ErrInvalidNationalCode
 	}
 
+	// Check for Duplicate National Code
+	existingUserByNationalCode, err := o.repo.GetByNationalCode(ctx, user.NationalCode)
+	if err != nil {
+		return fmt.Errorf("failed to check existing national code: %w", err)
+	}
+	if existingUserByNationalCode != nil {
+		return ErrDuplicatedUserNID
+	}
+
 	// Validate Password Strength
 	if err := ValidatePasswordWithFeedback(user.Password); err != nil {
 		return err
 	}
 
 	// Hash Password
-	err := user.SetPassword(user.Password)
+	err = user.SetPassword(user.Password)
 	if err != nil {
 		return err
 	}
@@ -45,12 +54,12 @@ func (o *Ops) Create(ctx context.Context, user *User) error {
 	// Normalize Email to Lowercase
 	user.Email = LowerCaseEmail(user.Email)
 
-	// Check for Duplicate Email (if needed)
-	existingUser, err := o.repo.GetByEmail(ctx, user.Email)
+	// Check for Duplicate Email
+	existingUserByEmail, err := o.repo.GetByEmail(ctx, user.Email)
 	if err != nil {
 		return fmt.Errorf("failed to check existing email: %w", err)
 	}
-	if existingUser != nil {
+	if existingUserByEmail != nil {
 		return ErrEmailAlreadyExists
 	}
 
@@ -62,7 +71,6 @@ func (o *Ops) Create(ctx context.Context, user *User) error {
 
 	return nil
 }
-
 
 func (o *Ops) GetUserByID(ctx context.Context, id uuid.UUID) (*User, error) {
 	return o.repo.GetByID(ctx, id)
@@ -111,4 +119,36 @@ func (o *Ops) Send2FACodeEmail(ctx context.Context, email, code string) error {
 	body := fmt.Sprintf("Your 2FA code is: %s. It will expire in 2 minutes.", code)
 
 	return o.smtp.SendEmail(email, subject, body)
+}
+
+func (o *Ops) GetUsers(ctx context.Context, page, pageSize int) ([]User, int64, error) {
+	if page < 1 || pageSize < 1 {
+		return nil, 0, ErrInvalidPagination
+	}
+
+	users, totalCount, err := o.repo.GetUsers(ctx, page, pageSize)
+	if err != nil {
+		return nil, 0, ErrFailedToGetUsers
+	}
+
+	return users, totalCount, nil
+}
+
+func (o *Ops) GetUserByNationalCode(ctx context.Context, nationalCode string) (*User, error) {
+	// Ensure the National Code is valid
+	if !IsValidIranianNationalCode(nationalCode) {
+		return nil, ErrInvalidNationalCode
+	}
+
+	// Retrieve the user by National Code
+	user, err := o.repo.GetByNationalCode(ctx, nationalCode)
+	if err != nil {
+		return nil, err
+	}
+
+	if user == nil {
+		return nil, ErrUserNotFound
+	}
+
+	return user, nil
 }
