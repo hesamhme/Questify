@@ -14,7 +14,7 @@ import (
 
 var (
 	ErrUserNotFound          = errors.New("user not found")
-	ErrDuplicatedUser        = errors.New("email/national ID already exists")
+	ErrDuplicatedUserNID        = errors.New("national ID already exists")
 	ErrInvalidNationalCode   = errors.New("national code is invalid")
 	ErrInvalidEmail          = errors.New("invalid email format")
 	ErrInvalidPassword       = errors.New("invalid password format")
@@ -35,7 +35,8 @@ type Repo interface {
 	Create(ctx context.Context, user *User) error
 	GetByID(ctx context.Context, id uuid.UUID) (*User, error)
 	GetByEmail(ctx context.Context, email string) (*User, error)
-	UpdateUser(ctx context.Context, user *User) error // New method for updating the user
+	UpdateUser(ctx context.Context, user *User) error 
+	GetByNationalCode(ctx context.Context, nationalCode string) (*User, error)
 	GetUsers(ctx context.Context, page, pageSize int) ([]User, int64, error)
 }
 
