@@ -186,3 +186,20 @@ func (r *questionRepo) GetBySurveyID(ctx context.Context, surveyID uuid.UUID) ([
 
 	return questions, nil
 }
+
+func (r *questionRepo) GetAnswerByUserAndQuestion(ctx context.Context, userID, questionID uuid.UUID) (*question.Answer, error) {
+	var answerEntity entities.Answer
+	err := r.db.WithContext(ctx).
+		Where("user_id = ? AND question_id = ?", userID, questionID).
+		First(&answerEntity).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, question.ErrAnswerNotFound
+		}
+		return nil, fmt.Errorf("failed to get answer: %w", err)
+	}
+
+	answer := mappers.AnswerEntityToDomain(answerEntity)
+	return &answer, nil
+}

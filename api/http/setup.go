@@ -67,7 +67,7 @@ func registerSurveyRoutes(cfg config.Config, router fiber.Router, app *service.A
 	router.Get("/:surveyId/question/previous", handlers.GetPreviousQuestion(app.SurveyService()))
 	router.Get("/:surveyId/question/:questionId", handlers.GetQuestion(app.SurveyService()))
 	router.Put("/:surveyId/question/:questionId", handlers.UpdateQuestion(app.SurveyService()))
-	router.Post("/question/:questionId/answer", handlers.CreateAnswer(app.SurveyService())) // Add endpoint for submitting answers
+	router.Post("/question/:questionId/answer", handlers.CreateAnswer(app.SurveyService()))
 }
 
 // func userRoleChecker() fiber.Handler {

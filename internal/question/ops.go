@@ -3,7 +3,9 @@ package question
 import (
 	domainSurvey "Questify/internal/survey"
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -21,47 +23,47 @@ func NewOps(repo Repo, surveyRepo domainSurvey.Repo) *Ops {
 }
 
 func (o *Ops) Create(ctx context.Context, question *Question) error {
-    if question.SurveyId == uuid.Nil {
-        return ErrSurveyIdIsRequired
-    }
+	if question.SurveyId == uuid.Nil {
+		return ErrSurveyIdIsRequired
+	}
 
-    if data, err := o.surveyRepo.GetByID(ctx, question.SurveyId); err != nil || data == nil {
-        return ErrSurveyNotFound
-    }
+	if data, err := o.surveyRepo.GetByID(ctx, question.SurveyId); err != nil || data == nil {
+		return ErrSurveyNotFound
+	}
 
-    if question.Type == DESCRIPTION {
-        if question.QuestionChoices != nil && len(*question.QuestionChoices) > 0 {
-            return ErrQuestionDescriptionShouldNotHaveMultipleChoiceList
-        }
-    } else if question.Type == MULTIPLE_CHOICE {
-        if question.QuestionChoices == nil || len(*question.QuestionChoices) <= 0 {
-            return ErrQuestionMultipleChoiceOptionsIsEmpty
-        }
+	if question.Type == DESCRIPTION {
+		if question.QuestionChoices != nil && len(*question.QuestionChoices) > 0 {
+			return ErrQuestionDescriptionShouldNotHaveMultipleChoiceList
+		}
+	} else if question.Type == MULTIPLE_CHOICE {
+		if question.QuestionChoices == nil || len(*question.QuestionChoices) <= 0 {
+			return ErrQuestionMultipleChoiceOptionsIsEmpty
+		}
 
-        if len(*question.QuestionChoices) <= 1 {
-            return ErrQuestionMultipleChoiceItemsCountGreaterThanOne
-        }
+		if len(*question.QuestionChoices) <= 1 {
+			return ErrQuestionMultipleChoiceItemsCountGreaterThanOne
+		}
 
-        seenValues := make(map[string]bool)
-        for _, choice := range *question.QuestionChoices {
-            if seenValues[choice.Value] {
-                return ErrDuplicateValueForQuestionChoicesNotAllowed
-            }
-            seenValues[choice.Value] = true
-        }
-    }
+		seenValues := make(map[string]bool)
+		for _, choice := range *question.QuestionChoices {
+			if seenValues[choice.Value] {
+				return ErrDuplicateValueForQuestionChoicesNotAllowed
+			}
+			seenValues[choice.Value] = true
+		}
+	}
 
-    maxIndex, err := o.repo.GetMaxQuestionIndexBySurveyID(ctx, question.SurveyId)
-    if err != nil {
-        return err
-    }
-    question.Index = maxIndex + 1
+	maxIndex, err := o.repo.GetMaxQuestionIndexBySurveyID(ctx, question.SurveyId)
+	if err != nil {
+		return err
+	}
+	question.Index = maxIndex + 1
 
-    err = o.repo.Create(ctx, question)
-    if err != nil {
-        return err
-    }
-    return nil
+	err = o.repo.Create(ctx, question)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (o *Ops) Update(ctx context.Context, question *Question, questionId uuid.UUID) error {
@@ -120,9 +122,59 @@ func (o *Ops) GetByID(ctx context.Context, id uuid.UUID) (*Question, error) {
 
 // CreateAnswer validates and adds a new answer to the database
 func (o *Ops) CreateAnswer(ctx context.Context, answer *Answer) error {
-	// TODO: Add validation logic if needed
+	// Validate Answer fields
+	if answer.UserID == uuid.Nil {
+		return errors.New("user ID is required")
+	}
+	if answer.QuestionID == uuid.Nil {
+		return errors.New("question ID is required")
+	}
 
-	err := o.repo.CreateAnswer(ctx, answer)
+	question, err := o.repo.GetByID(ctx, answer.QuestionID)
+	if err != nil {
+		return fmt.Errorf("failed to fetch question: %w", err)
+	}
+	if question == nil {
+		return errors.New("question not found")
+	}
+
+	// Validate answer based on question type
+	switch question.Type {
+	case DESCRIPTION:
+		if answer.Response == "" {
+			return errors.New("text answer is required for description questions")
+		}
+	case MULTIPLE_CHOICE:
+		if answer.Response == "" {
+			return errors.New("selected choice is required for multiple choice questions")
+		}
+		choiceValid := false
+		for _, choice := range *question.QuestionChoices {
+			if choice.Value == answer.Response {
+				choiceValid = true
+				break
+			}
+		}
+		if !choiceValid {
+			return errors.New("selected choice does not belong to the question")
+		}
+	default:
+		return fmt.Errorf("unsupported question type: %v", question.Type)
+	}
+
+	existingAnswer, err := o.repo.GetAnswerByUserAndQuestion(ctx, answer.UserID, answer.QuestionID)
+	if err != nil && !errors.Is(err, ErrAnswerNotFound) {
+		return fmt.Errorf("failed to check existing answer: %w", err)
+	}
+	if existingAnswer != nil {
+		return errors.New("user has already answered this question")
+	}
+
+	// Set the creation time
+	answer.CreatedAt = time.Now()
+
+	// Create the answer in the repository
+	err = o.repo.CreateAnswer(ctx, answer)
 	if err != nil {
 		return fmt.Errorf("failed to create answer: %w", err)
 	}

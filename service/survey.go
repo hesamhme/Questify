@@ -11,9 +11,13 @@ import (
 
 type SurveyService struct {
 	questionOps  *question.Ops
-	userProgress map[string]uint
-	mu           sync.RWMutex
 	surveyOps    *survey.Ops
+	mu           sync.Mutex
+	userProgress map[string]uint
+}
+
+func generateProgressKey(userID string, surveyID uuid.UUID) string {
+	return fmt.Sprintf("%s:%s", userID, surveyID.String())
 }
 
 func NewSurveyService(questionOps *question.Ops, surveyOps *survey.Ops) *SurveyService {
@@ -29,21 +33,22 @@ func (s *SurveyService) CreateQuestion(ctx context.Context, question *question.Q
 }
 
 func (s *SurveyService) GetNextQuestion(ctx context.Context, surveyID uuid.UUID, userID string) (*question.Question, error) {
-	s.mu.Lock()
-	currentIndex := s.userProgress[userID]
-	s.userProgress[userID]++
-	s.mu.Unlock()
+    s.mu.Lock()
+    progressKey := generateProgressKey(userID, surveyID)
+    currentIndex := s.userProgress[progressKey]
+    s.userProgress[progressKey]++
+    s.mu.Unlock()
 
-	questions, err := s.questionOps.GetQuestionsBySurveyID(ctx, surveyID)
-	if err != nil {
-		return nil, err
-	}
+    questions, err := s.questionOps.GetQuestionsBySurveyID(ctx, surveyID)
+    if err != nil {
+        return nil, err
+    }
 
-	if int(currentIndex) >= len(questions) {
-		return nil, fmt.Errorf("no more questions")
-	}
+    if int(currentIndex) >= len(questions) {
+        return nil, fmt.Errorf("no more questions")
+    }
 
-	return questions[currentIndex], nil
+    return questions[currentIndex], nil
 }
 
 func (s *SurveyService) ResetUserProgress(userID string) {
@@ -53,36 +58,37 @@ func (s *SurveyService) ResetUserProgress(userID string) {
 }
 
 func (s *SurveyService) GetPreviousQuestion(ctx context.Context, surveyID uuid.UUID, userID string) (*question.Question, error) {
-	resultSurvey, err := s.surveyOps.GetByID(ctx, surveyID)
-	if err != nil {
-		return nil, err
-	}
+    resultSurvey, err := s.surveyOps.GetByID(ctx, surveyID)
+    if err != nil {
+        return nil, err
+    }
 
-	if !resultSurvey.AllowBack {
-		return nil, fmt.Errorf("going back is not allowed for this survey")
-	}
+    if !resultSurvey.AllowBack {
+        return nil, fmt.Errorf("going back is not allowed for this survey")
+    }
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
+    s.mu.Lock()
+    defer s.mu.Unlock()
 
-	currentIndex, exists := s.userProgress[userID]
-	if !exists || currentIndex == 0 {
-		return nil, fmt.Errorf("no previous questions available")
-	}
+    progressKey := generateProgressKey(userID, surveyID)
+    currentIndex, exists := s.userProgress[progressKey]
+    if !exists || currentIndex == 0 {
+        return nil, fmt.Errorf("no previous questions available")
+    }
 
-	questions, err := s.questionOps.GetQuestionsBySurveyID(ctx, surveyID)
-	if err != nil {
-		return nil, err
-	}
+    questions, err := s.questionOps.GetQuestionsBySurveyID(ctx, surveyID)
+    if err != nil {
+        return nil, err
+    }
 
-	if int(currentIndex) > len(questions) {
-		return nil, fmt.Errorf("you have reached the end of the questions")
-	}
+    if int(currentIndex) > len(questions) {
+        return nil, fmt.Errorf("you have reached the end of the questions")
+    }
 
-	s.userProgress[userID]--
+    s.userProgress[progressKey]--
 
-	currentIndex = s.userProgress[userID]
-	return questions[currentIndex], nil
+    currentIndex = s.userProgress[progressKey]
+    return questions[currentIndex], nil
 }
 
 func (s *SurveyService) GetQuestion(ctx context.Context, questionID uuid.UUID) (*question.Question, error) {
