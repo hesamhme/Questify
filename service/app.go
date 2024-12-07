@@ -8,6 +8,7 @@ import (
 
 	"Questify/config"
 	"Questify/internal/user"
+	"Questify/internal/role"
 	"Questify/pkg/adapters/storage"
 	"Questify/pkg/smtp"
 	"Questify/pkg/valuecontext"
@@ -16,12 +17,14 @@ import (
 )
 
 type AppContainer struct {
-	cfg           config.Config
-	dbConn        *gorm.DB
-	userService   *UserService
-	authService   *AuthService
-	smtpClient    *smtp.SMTPClient
+	cfg         config.Config
+	dbConn      *gorm.DB
+	userService *UserService
+	authService *AuthService
+	smtpClient  *smtp.SMTPClient
+	roleService *RoleService
 	surveyService *SurveyService
+
 }
 
 func NewAppContainer(cfg config.Config) (*AppContainer, error) {
@@ -31,14 +34,28 @@ func NewAppContainer(cfg config.Config) (*AppContainer, error) {
 
 	app.mustInitDB()
 	storage.Migrate(app.dbConn)
-
 	app.setSMTPClient()
 	app.setUserService()
 	app.setAuthService()
+	app.setRoleService()
 	app.setSurveyService()
+
 
 	return app, nil
 }
+
+func (a *AppContainer) RoleService() *RoleService {
+	return a.roleService
+}
+
+func (a *AppContainer) setRoleService() {
+	if a.roleService != nil {
+		return
+	}
+
+	a.roleService = NewRoleService(role.NewOps(storage.NewRoleRepo(a.dbConn)))
+}
+
 
 func (a *AppContainer) RawRBConnection() *gorm.DB {
 	return a.dbConn
