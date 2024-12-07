@@ -100,3 +100,18 @@ func (r *userRepo) GetUsers(ctx context.Context, page, pageSize int) ([]user.Use
 
 	return result, totalCount, nil
 }
+
+func (r *userRepo) GetByNationalCode(ctx context.Context, nationalCode string) (*user.User, error) {
+    var userEntity entities.User
+    result := r.db.WithContext(ctx).Where("national_code = ?", nationalCode).First(&userEntity)
+    if result.Error != nil {
+        if result.Error == gorm.ErrRecordNotFound {
+            return nil, nil
+        }
+        return nil, result.Error
+    }
+
+    // Map the entity to the domain type
+    userDomain := mappers.UserEntityToDomain(userEntity)
+    return &userDomain, nil
+}
