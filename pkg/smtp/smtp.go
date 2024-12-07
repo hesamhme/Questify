@@ -38,9 +38,13 @@ func (s *SMTPClient) SendEmail(recipient, subject, body string) error {
 
 	addr := fmt.Sprintf("%s:%d", s.host, s.port)
 
+	// Log email details for debugging
+	fmt.Printf("Sending email to %s via %s\n", recipient, addr)
+
 	if err := smtp.SendMail(addr, auth, s.senderEmail, []string{recipient}, msg); err != nil {
 		return fmt.Errorf("failed to send email: %w", err)
 	}
 
+	fmt.Println("Email sent successfully.")
 	return nil
 }
