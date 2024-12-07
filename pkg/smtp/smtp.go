@@ -9,20 +9,20 @@ import (
 
 // SMTPClient handles sending emails via an SMTP server
 type SMTPClient struct {
-	host       string
-	port       int
-	username   string
-	password   string
+	host        string
+	port        int
+	username    string
+	password    string
 	senderEmail string
 }
 
 // NewSMTPClient creates a new SMTPClient instance
 func NewSMTPClient(cfg config.SMTP) *SMTPClient {
 	return &SMTPClient{
-		host:       cfg.Host,
-		port:       cfg.Port,
-		username:   cfg.Username,
-		password:   cfg.Password,
+		host:        cfg.Host,
+		port:        cfg.Port,
+		username:    cfg.Username,
+		password:    cfg.Password,
 		senderEmail: cfg.SenderEmail,
 	}
 }
@@ -38,13 +38,9 @@ func (s *SMTPClient) SendEmail(recipient, subject, body string) error {
 
 	addr := fmt.Sprintf("%s:%d", s.host, s.port)
 
-	// Log email details for debugging
-	fmt.Printf("Sending email to %s via %s\n", recipient, addr)
-
 	if err := smtp.SendMail(addr, auth, s.senderEmail, []string{recipient}, msg); err != nil {
 		return fmt.Errorf("failed to send email: %w", err)
 	}
 
-	fmt.Println("Email sent successfully.")
 	return nil
 }
