@@ -174,6 +174,7 @@ func (a *AuthService) ConfirmTFA(ctx context.Context, email, code string) error 
 	}
 
 	// Clear TFA code after successful confirmation
+	user.IsVerified = true
 	user.TfaCode = ""
 	user.TfaExpiresAt = time.Time{}
 	if err := a.userOps.UpdateUser(ctx, user); err != nil {
