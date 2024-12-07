@@ -9,20 +9,20 @@ import (
 
 // SMTPClient handles sending emails via an SMTP server
 type SMTPClient struct {
-	host       string
-	port       int
-	username   string
-	password   string
+	host        string
+	port        int
+	username    string
+	password    string
 	senderEmail string
 }
 
 // NewSMTPClient creates a new SMTPClient instance
 func NewSMTPClient(cfg config.SMTP) *SMTPClient {
 	return &SMTPClient{
-		host:       cfg.Host,
-		port:       cfg.Port,
-		username:   cfg.Username,
-		password:   cfg.Password,
+		host:        cfg.Host,
+		port:        cfg.Port,
+		username:    cfg.Username,
+		password:    cfg.Password,
 		senderEmail: cfg.SenderEmail,
 	}
 }
