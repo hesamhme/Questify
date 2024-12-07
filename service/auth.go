@@ -46,6 +46,10 @@ func (s *AuthService) CreateUser(ctx context.Context, user *user.User) error {
 	if err != nil {
 		return err
 	}
+	err = s.SendTFAEmail(ctx, user.Email, tfaCode) 
+	if err != nil {
+    return fmt.Errorf("failed to send email: %w", err)
+	}
 
 	// Return the generated TFA code in the response
 	return nil
@@ -174,6 +178,7 @@ func (a *AuthService) ConfirmTFA(ctx context.Context, email, code string) error 
 	}
 
 	// Clear TFA code after successful confirmation
+	user.IsVerified = true
 	user.TfaCode = ""
 	user.TfaExpiresAt = time.Time{}
 	if err := a.userOps.UpdateUser(ctx, user); err != nil {

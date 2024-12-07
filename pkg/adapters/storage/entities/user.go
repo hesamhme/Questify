@@ -14,6 +14,7 @@ type User struct {
 	TfaCode      string    `gorm:"size:6"`                                          // Temporary TFA code
 	TfaExpiresAt time.Time `gorm:""`                                                // Expiration time for TFA
 	Role         string    `gorm:"default:user"`
-	CreatedAt    time.Time `gorm:"autoCreateTime"` // Auto set creation time
-	UpdatedAt    time.Time `gorm:"autoUpdateTime"` // Auto set update time
+	IsVerified   bool      `gorm:"type:boolean;default:false"` // New column
+	CreatedAt    time.Time `gorm:"autoCreateTime"`             // Auto set creation time
+	UpdatedAt    time.Time `gorm:"autoUpdateTime"`             // Auto set update time
 }

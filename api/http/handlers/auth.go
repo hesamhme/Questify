@@ -110,3 +110,36 @@ func ConfirmTFA(authService *service.AuthService) fiber.Handler {
 		return c.JSON(fiber.Map{"message": "TFA confirmed. Registration complete."})
 	}
 }
+
+func SignUpUser(serviceFactory ServiceFactory[*service.AuthService]) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		authService := serviceFactory(c.UserContext())
+		var req presenter.RegisterRequest
+
+		if err := c.BodyParser(&req); err != nil {
+			return SendError(c, err, fiber.StatusBadRequest)
+		}
+
+		err := BodyValidator(req)
+		if err != nil {
+			return presenter.BadRequest(c, err)
+		}
+
+		u := presenter.RegisterRequestToUser(&req)
+
+		err = authService.CreateUser(c.Context(), u)
+		if err != nil {
+			return presenter.InternalServerError(c, err)
+		}
+
+		// Response with the same TFA code stored in the database
+		return c.JSON(fiber.Map{
+			"success": true,
+			"message": "TFA code sent to email.",
+			"data": fiber.Map{
+				"message":  "User successfully registered. Please verify your TFA code.",
+				"tfa_code": u.TfaCode, // Ensure this matches the database
+			},
+		})
+	}
+}
