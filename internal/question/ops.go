@@ -124,10 +124,10 @@ func (o *Ops) GetByID(ctx context.Context, id uuid.UUID) (*Question, error) {
 func (o *Ops) CreateAnswer(ctx context.Context, answer *Answer) error {
 	// Validate Answer fields
 	if answer.UserID == uuid.Nil {
-		return errors.New("user ID is required")
+		return ErrUserIDRequired
 	}
 	if answer.QuestionID == uuid.Nil {
-		return errors.New("question ID is required")
+		return ErrQuestionIDRequired
 	}
 
 	question, err := o.repo.GetByID(ctx, answer.QuestionID)
@@ -135,18 +135,18 @@ func (o *Ops) CreateAnswer(ctx context.Context, answer *Answer) error {
 		return fmt.Errorf("failed to fetch question: %w", err)
 	}
 	if question == nil {
-		return errors.New("question not found")
+		return ErrQuestionNotFound
 	}
 
 	// Validate answer based on question type
 	switch question.Type {
 	case DESCRIPTION:
 		if answer.Response == "" {
-			return errors.New("text answer is required for description questions")
+			return ErrInvalidAnswerForQuestionType
 		}
 	case MULTIPLE_CHOICE:
 		if answer.Response == "" {
-			return errors.New("selected choice is required for multiple choice questions")
+			return ErrInvalidAnswerForQuestionType
 		}
 		choiceValid := false
 		for _, choice := range *question.QuestionChoices {
@@ -156,7 +156,7 @@ func (o *Ops) CreateAnswer(ctx context.Context, answer *Answer) error {
 			}
 		}
 		if !choiceValid {
-			return errors.New("selected choice does not belong to the question")
+			return ErrInvalidAnswerForQuestionType
 		}
 	default:
 		return fmt.Errorf("unsupported question type: %v", question.Type)
@@ -167,7 +167,7 @@ func (o *Ops) CreateAnswer(ctx context.Context, answer *Answer) error {
 		return fmt.Errorf("failed to check existing answer: %w", err)
 	}
 	if existingAnswer != nil {
-		return errors.New("user has already answered this question")
+		return ErrUserAlreadyAnswered
 	}
 
 	// Set the creation time

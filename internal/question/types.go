@@ -31,6 +31,10 @@ var (
 	ErrQuestionNotFound                                   = errors.New("Question not found")
 	ErrCannotChangeSurveyId                               = errors.New("Can not change survey id")
 	ErrAnswerNotFound                                     = errors.New("Answer not found")
+	ErrUserIDRequired                                     = errors.New("user ID is required")
+	ErrQuestionIDRequired                                 = errors.New("question ID is required")
+	ErrInvalidAnswerForQuestionType                       = errors.New("invalid answer for the question type")
+	ErrUserAlreadyAnswered                                = errors.New("user has already answered this question")
 )
 
 type QuestionType int

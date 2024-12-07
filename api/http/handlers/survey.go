@@ -3,6 +3,7 @@ package handlers
 import (
 	"Questify/api/http/handlers/presenter"
 	qt "Questify/internal/question"
+	"Questify/internal/survey"
 	"Questify/pkg/jwt"
 	"Questify/service"
 	"encoding/json"
@@ -16,36 +17,34 @@ func CreateQuestion(questionService *service.SurveyService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		surveyId := c.Params("surveyId")
 		if surveyId == "" {
-			return c.Status(fiber.StatusBadRequest).SendString("Survey ID is required")
+			return presenter.BadRequest(c, errors.New("Survey ID is required"))
 		}
 
 		surveyUUID, err := uuid.Parse(surveyId)
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).SendString("Invalid Survey ID format")
+			return presenter.BadRequest(c, errors.New("Invalid Survey ID format"))
 		}
 
 		var question presenter.Question
 		if err := c.BodyParser(&question); err != nil {
-			return c.Status(fiber.StatusBadRequest).SendString("Invalid request body")
+			return presenter.BadRequest(c, errors.New("Invalid request body"))
 		}
 
-		// Parse the `question_choices` field
 		choicesJSON := c.FormValue("question_choices")
 		if choicesJSON != "" {
 			var choices []presenter.QuestionChoice
 			if err := json.Unmarshal([]byte(choicesJSON), &choices); err != nil {
-				return c.Status(fiber.StatusBadRequest).SendString("Invalid question_choices format")
+				return presenter.BadRequest(c, errors.New("Invalid question_choices format"))
 			}
 			question.QuestionChoices = choices
 		}
 
-		// Check if a file is uploaded
 		var filePath string
 		file, err := c.FormFile("media")
 		if err == nil {
 			filePath = "./uploads/" + file.Filename
 			if err := c.SaveFile(file, filePath); err != nil {
-				return c.Status(fiber.StatusInternalServerError).SendString("Failed to save file")
+				return presenter.InternalServerError(c, errors.New("Failed to save file"))
 			}
 		}
 
@@ -54,18 +53,13 @@ func CreateQuestion(questionService *service.SurveyService) fiber.Handler {
 		err = questionService.CreateQuestion(c.Context(), domainQuestion)
 		if err != nil {
 			switch err {
-			case qt.ErrSurveyIdIsRequired:
-				return c.Status(fiber.StatusBadRequest).SendString("Survey id is required!")
+			case qt.ErrSurveyIdIsRequired, qt.ErrQuestionMultipleChoiceOptionsIsEmpty,
+				qt.ErrQuestionDescriptionShouldNotHaveMultipleChoiceList,
+				qt.ErrQuestionMultipleChoiceItemsCountGreaterThanOne,
+				qt.ErrDuplicateValueForQuestionChoicesNotAllowed:
+				return presenter.BadRequest(c, err)
 			case qt.ErrSurveyNotFound:
-				return c.Status(fiber.StatusNotFound).SendString("Survey not found")
-			case qt.ErrQuestionMultipleChoiceOptionsIsEmpty:
-				return c.Status(fiber.StatusBadRequest).SendString("Multiple Choice question should have a list of options")
-			case qt.ErrQuestionDescriptionShouldNotHaveMultipleChoiceList:
-				return c.Status(fiber.StatusBadRequest).SendString("Description question should not contain a list of options")
-			case qt.ErrQuestionMultipleChoiceItemsCountGreaterThanOne:
-				return c.Status(fiber.StatusBadRequest).SendString("Question choices should be greater than 1")
-			case qt.ErrDuplicateValueForQuestionChoicesNotAllowed:
-				return c.Status(fiber.StatusBadRequest).SendString("Duplicate choice values are not allowed")
+				return presenter.NotFound(c, err)
 			default:
 				return presenter.InternalServerError(c, err)
 			}
@@ -79,20 +73,29 @@ func CreateSurvey(surveyService *service.SurveyService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var surveyReq presenter.Survey
 		if err := c.BodyParser(&surveyReq); err != nil {
-			return c.Status(fiber.StatusBadRequest).SendString("Invalid request body")
+			return presenter.BadRequest(c, errors.New("Invalid request body"))
 		}
 
 		claims := c.Locals(jwt.UserClaimKey)
 		userClaims, ok := claims.(*jwt.UserClaims)
 		if !ok || userClaims.UserID == uuid.Nil {
-			return c.Status(fiber.StatusUnauthorized).SendString("User not authenticated")
+			return presenter.Unauthorized(c, errors.New("User not authenticated"))
 		}
 
 		domainSurvey := presenter.MapPresenterToSurvey(&surveyReq, userClaims.UserID)
 
 		err := surveyService.CreateSurvey(c.Context(), domainSurvey)
 		if err != nil {
-			return presenter.InternalServerError(c, err)
+			switch {
+			case errors.Is(err, survey.ErrInvalidTitle),
+				errors.Is(err, survey.ErrInvalidTimeRange),
+				errors.Is(err, survey.ErrPastStartTime),
+				errors.Is(err, survey.ErrInvalidParticipationLimit),
+				errors.Is(err, survey.ErrInvalidResponseTimeLimit):
+				return presenter.BadRequest(c, err)
+			default:
+				return presenter.InternalServerError(c, err)
+			}
 		}
 
 		return presenter.Created(c, "Created Survey with ID: ", domainSurvey.ID)
@@ -103,78 +106,46 @@ func CreateAnswer(surveyService *service.SurveyService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		questionID := c.Params("questionId")
 		if questionID == "" {
-			return c.Status(fiber.StatusBadRequest).SendString("Question ID is required")
+			return presenter.BadRequest(c, errors.New("Question ID is required"))
 		}
 
 		questionUUID, err := uuid.Parse(questionID)
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).SendString("Invalid Question ID format")
+			return presenter.BadRequest(c, errors.New("Invalid Question ID format"))
 		}
 
 		claims := c.Locals(jwt.UserClaimKey)
 		userClaims, ok := claims.(*jwt.UserClaims)
 		if !ok || userClaims.UserID == uuid.Nil {
-			return c.Status(fiber.StatusUnauthorized).SendString("User not authenticated")
+			return presenter.Unauthorized(c, errors.New("User not authenticated"))
 		}
 
-		// Parse the request body
 		var req presenter.Answer
 		if err := c.BodyParser(&req); err != nil {
-			return fiber.NewError(fiber.StatusBadRequest, "Invalid request payload")
+			return presenter.BadRequest(c, errors.New("Invalid request payload"))
 		}
 
-		// Map presenter answer to domain model
 		answer := presenter.MapPresenterToAnswer(&req, questionUUID, userClaims.UserID)
 
-		// Call the service to create the answer
 		err = surveyService.CreateAnswer(c.Context(), answer)
 		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-		}
-
-		return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-			"success": true,
-			"message": "Answer submitted successfully.",
-		})
-	}
-}
-
-func GetQuestion(questionService *service.SurveyService) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		questionID := c.Params("questionId")
-		if questionID == "" {
-			return c.Status(fiber.StatusBadRequest).SendString("Question ID is required")
-		}
-
-		questionUUID, err := uuid.Parse(questionID)
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).SendString("Invalid Question ID format")
-		}
-
-		claims := c.Locals(jwt.UserClaimKey)
-		userClaims, ok := claims.(*jwt.UserClaims)
-		if !ok || userClaims.UserID == uuid.Nil {
-			return c.Status(fiber.StatusUnauthorized).SendString("User not authenticated")
-		}
-
-		question, err := questionService.GetQuestion(c.Context(), questionUUID)
-		if err != nil {
-			switch err {
-			case qt.ErrSurveyNotFound:
-				return c.Status(fiber.StatusNotFound).SendString("Survey not found")
-			case qt.ErrNoMoreQuestionsForThisSurvey:
-				return c.Status(fiber.StatusNotFound).SendString("No more questions available")
+			switch {
+			case errors.Is(err, qt.ErrUserIDRequired):
+				return presenter.BadRequest(c, errors.New("User ID is required"))
+			case errors.Is(err, qt.ErrQuestionIDRequired):
+				return presenter.BadRequest(c, errors.New("Question ID is required"))
+			case errors.Is(err, qt.ErrQuestionNotFound):
+				return presenter.NotFound(c, errors.New("Question not found"))
+			case errors.Is(err, qt.ErrInvalidAnswerForQuestionType):
+				return presenter.BadRequest(c, errors.New("Invalid answer for the question type"))
+			case errors.Is(err, qt.ErrUserAlreadyAnswered):
+				return presenter.BadRequest(c, errors.New("User has already answered this question"))
 			default:
 				return presenter.InternalServerError(c, err)
 			}
 		}
 
-		if question == nil {
-			return c.Status(fiber.StatusNotFound).SendString("No more questions available")
-		}
-
-		presentedQuestion := presenter.MapQuestionToPresenter(question)
-		return c.Status(fiber.StatusOK).JSON(presentedQuestion)
+		return presenter.Created(c, "Answer submitted successfully", nil)
 	}
 }
 
@@ -182,38 +153,36 @@ func GetNextQuestion(questionService *service.SurveyService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		surveyID := c.Params("surveyId")
 		if surveyID == "" {
-			return c.Status(fiber.StatusBadRequest).SendString("Survey ID is required")
+			return presenter.BadRequest(c, errors.New("Survey ID is required"))
 		}
 
 		surveyUUID, err := uuid.Parse(surveyID)
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).SendString("Invalid Survey ID format")
+			return presenter.BadRequest(c, errors.New("Invalid Survey ID format"))
 		}
 
 		claims := c.Locals(jwt.UserClaimKey)
 		userClaims, ok := claims.(*jwt.UserClaims)
 		if !ok || userClaims.UserID == uuid.Nil {
-			return c.Status(fiber.StatusUnauthorized).SendString("User not authenticated")
+			return presenter.Unauthorized(c, errors.New("User not authenticated"))
 		}
 
 		question, err := questionService.GetNextQuestion(c.Context(), surveyUUID, userClaims.UserID.String())
 		if err != nil {
 			switch err {
-			case qt.ErrSurveyNotFound:
-				return c.Status(fiber.StatusNotFound).SendString("Survey not found")
-			case qt.ErrNoMoreQuestionsForThisSurvey:
-				return c.Status(fiber.StatusNotFound).SendString("No more questions available")
+			case qt.ErrSurveyNotFound, qt.ErrNoMoreQuestionsForThisSurvey:
+				return presenter.NotFound(c, err)
 			default:
 				return presenter.InternalServerError(c, err)
 			}
 		}
 
 		if question == nil {
-			return c.Status(fiber.StatusNotFound).SendString("No more questions available")
+			return presenter.NotFound(c, errors.New("No more questions available"))
 		}
 
 		presentedQuestion := presenter.MapQuestionToPresenter(question)
-		return c.Status(fiber.StatusOK).JSON(presentedQuestion)
+		return presenter.OK(c, "Next question retrieved successfully", presentedQuestion)
 	}
 }
 
@@ -221,18 +190,18 @@ func GetPreviousQuestion(questionService *service.SurveyService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		surveyID := c.Params("surveyId")
 		if surveyID == "" {
-			return c.Status(fiber.StatusBadRequest).SendString("Survey ID is required")
+			return presenter.BadRequest(c, errors.New("Survey ID is required"))
 		}
 
 		surveyUUID, err := uuid.Parse(surveyID)
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).SendString("Invalid Survey ID format")
+			return presenter.BadRequest(c, errors.New("Invalid Survey ID format"))
 		}
 
 		claims := c.Locals(jwt.UserClaimKey)
 		userClaims, ok := claims.(*jwt.UserClaims)
 		if !ok || userClaims.UserID == uuid.Nil {
-			return c.Status(fiber.StatusUnauthorized).SendString("User not authenticated")
+			return presenter.Unauthorized(c, errors.New("User not authenticated"))
 		}
 
 		question, err := questionService.GetPreviousQuestion(c.Context(), surveyUUID, userClaims.UserID.String())
@@ -356,5 +325,44 @@ func UpdateQuestion(questionService *service.SurveyService) fiber.Handler {
 		}
 
 		return presenter.NoContent(c)
+	}
+}
+
+func GetQuestion(questionService *service.SurveyService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		questionID := c.Params("questionId")
+		if questionID == "" {
+			return c.Status(fiber.StatusBadRequest).SendString("Question ID is required")
+		}
+
+		questionUUID, err := uuid.Parse(questionID)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("Invalid Question ID format")
+		}
+
+		claims := c.Locals(jwt.UserClaimKey)
+		userClaims, ok := claims.(*jwt.UserClaims)
+		if !ok || userClaims.UserID == uuid.Nil {
+			return c.Status(fiber.StatusUnauthorized).SendString("User not authenticated")
+		}
+
+		question, err := questionService.GetQuestion(c.Context(), questionUUID)
+		if err != nil {
+			switch err {
+			case qt.ErrSurveyNotFound:
+				return c.Status(fiber.StatusNotFound).SendString("Survey not found")
+			case qt.ErrNoMoreQuestionsForThisSurvey:
+				return c.Status(fiber.StatusNotFound).SendString("No more questions available")
+			default:
+				return presenter.InternalServerError(c, err)
+			}
+		}
+
+		if question == nil {
+			return c.Status(fiber.StatusNotFound).SendString("No more questions available")
+		}
+
+		presentedQuestion := presenter.MapQuestionToPresenter(question)
+		return c.Status(fiber.StatusOK).JSON(presentedQuestion)
 	}
 }
