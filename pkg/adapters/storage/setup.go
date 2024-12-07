@@ -72,9 +72,11 @@ func Migrate(db *gorm.DB) error {
 func SeedPermissions(db *gorm.DB) error {
 	permissions := []entities.Permission{
 		{ID: 1, Description: "View Survey"},
-		{ID: 2, Description: "Participate in Survey"},
-		{ID: 3, Description: "See Results"},
-		{ID: 4, Description: "Create Survey"},
+		{ID: 2, Description: "see selected users vote"},
+		{ID: 3, Description: "vote permission"},
+		{ID: 4, Description: "edit survey"},
+		{ID: 5, Description: "role permissions"},
+		{ID: 6, Description: "see reports"},
 	}
 
 	for _, perm := range permissions {
