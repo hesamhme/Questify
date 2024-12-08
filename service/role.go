@@ -49,3 +49,24 @@ func (s *RoleService) CheckPermission(ctx context.Context, userID uuid.UUID, per
 func (s *RoleService) GetAllRoles(ctx context.Context) ([]role.Role, error) {
 	return s.roleOps.GetAllRoles(ctx)
 }
+
+// AssignRoleToSurveyUser assigns a role to a user for a specific survey.
+func (s *RoleService) AssignRoleToSurveyUser(ctx context.Context, surveyID uuid.UUID, userID uuid.UUID, roleID uuid.UUID, timeout *time.Duration) error {
+	// TODO: Add logic to validate if the current user is the survey owner or has "role permissions"
+	return s.roleOps.AssignRoleToSurveyUser(ctx, surveyID, userID, roleID, timeout)
+}
+
+// GetSurveyRolesByUser retrieves roles assigned to a user for a specific survey.
+func (s *RoleService) GetSurveyRolesByUser(ctx context.Context, surveyID uuid.UUID, userID uuid.UUID) ([]role.Role, error) {
+	return s.roleOps.GetRolesBySurveyAndUser(ctx, surveyID, userID)
+}
+
+// CheckSurveyPermission checks if a user has a specific permission for a survey.
+func (s *RoleService) CheckSurveyPermission(ctx context.Context, surveyID uuid.UUID, userID uuid.UUID, permissionID int) (bool, error) {
+	return s.roleOps.CheckSurveyPermission(ctx, surveyID, userID, permissionID)
+}
+
+// CheckSurveyPermission checks if a user has a specific permission for a survey.
+func (s *RoleService) GetRolesBySurveyAndUser(ctx context.Context, surveyID uuid.UUID, userID uuid.UUID) ([]role.Role, error) {
+	return s.roleOps.GetRolesBySurveyAndUser(ctx, surveyID, userID)
+}

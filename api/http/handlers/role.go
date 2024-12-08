@@ -2,71 +2,45 @@ package handlers
 
 import (
 	"Questify/api/http/handlers/presenter"
+	"Questify/internal/role"
 	"Questify/service"
 	"errors"
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"time"
 )
 
-// CreateRole creates a new role with specified permissions.
-func CreateRole(roleService *service.RoleService) fiber.Handler {
+// AssignRoleToSurveyUser assigns a role to a user for a specific survey.
+func AssignRoleToSurveyUser(roleService *service.RoleService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var req struct {
-			Name         string `json:"name"`
-			PermissionIDs []int `json:"permissions"`
+			UserID  string `json:"user_id"`
+			RoleID  string `json:"role_id"`
+			Timeout int    `json:"timeout"` // in minutes
+		}
+
+		surveyID := c.Params("surveyId")
+		if surveyID == "" {
+			return presenter.BadRequest(c, errors.New("survey ID is required"))
+		}
+		surveyUUID, err := uuid.Parse(surveyID)
+		if err != nil {
+			return presenter.BadRequest(c, errors.New("invalid survey ID format"))
 		}
 
 		if err := c.BodyParser(&req); err != nil {
 			return presenter.BadRequest(c, err)
 		}
 
-		if req.Name == "" || len(req.PermissionIDs) == 0 {
-			return presenter.BadRequest(c, errors.New("invalid role data"))
-		}
-
-		role, err := roleService.CreateRole(c.Context(), req.Name, req.PermissionIDs)
+		userUUID, err := uuid.Parse(req.UserID)
 		if err != nil {
-			return presenter.InternalServerError(c, err)
+			return presenter.BadRequest(c, errors.New("invalid user ID format"))
 		}
 
-		return presenter.Created(c, "Role created successfully", role)
-	}
-}
-
-// GetAllRoles retrieves all roles in the system.
-func GetAllRoles(roleService *service.RoleService) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		roles, err := roleService.GetAllRoles(c.Context())
+		roleUUID, err := uuid.Parse(req.RoleID)
 		if err != nil {
-			return presenter.InternalServerError(c, err)
-		}
-
-		return presenter.OK(c, "Roles retrieved successfully", roles)
-	}
-}
-
-// AssignRoleToUser assigns a role to a user.
-func AssignRoleToUser(roleService *service.RoleService) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		var req struct {
-			UserID string `json:"user_id"`
-			RoleID string `json:"role_id"`
-			Timeout int   `json:"timeout"` // in minutes
-		}
-
-		if err := c.BodyParser(&req); err != nil {
-			return presenter.BadRequest(c, err)
-		}
-
-		userID, err := uuid.Parse(req.UserID)
-		if err != nil {
-			return presenter.BadRequest(c, errors.New("invalid user ID"))
-		}
-
-		roleID, err := uuid.Parse(req.RoleID)
-		if err != nil {
-			return presenter.BadRequest(c, errors.New("invalid role ID"))
+			return presenter.BadRequest(c, errors.New("invalid role ID format"))
 		}
 
 		var timeout *time.Duration
@@ -75,33 +49,53 @@ func AssignRoleToUser(roleService *service.RoleService) fiber.Handler {
 			timeout = &duration
 		}
 
-		err = roleService.AssignRoleToUser(c.Context(), userID, roleID, timeout)
+		// Validate if the user has the right permissions or is the survey owner
+		claims := c.Locals("user_claims").(*presenter.UserClaims)
+		if claims.UserID == uuid.Nil {
+			return presenter.Unauthorized(c, errors.New("user not authenticated"))
+		}
+
+		isOwner, err := roleService.CheckSurveyPermission(c.Context(), surveyUUID, claims.UserID, role.PermissionIDManageRoles)
+		if err != nil || !isOwner {
+			return presenter.Forbidden(c, errors.New("user does not have the necessary permissions"))
+		}
+
+		err = roleService.AssignRoleToSurveyUser(c.Context(), surveyUUID, userUUID, roleUUID, timeout)
 		if err != nil {
 			return presenter.InternalServerError(c, err)
 		}
 
-		return presenter.Created(c, "Role assigned to user successfully", nil)
+		return presenter.Created(c, "Role assigned to survey user successfully", nil)
 	}
 }
 
-// CheckUserPermission checks if a user has a specific permission.
-func CheckUserPermission(roleService *service.RoleService) fiber.Handler {
+// CheckSurveyPermission checks if a user has a specific permission for a survey.
+func CheckSurveyPermission(roleService *service.RoleService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var req struct {
 			UserID       string `json:"user_id"`
 			PermissionID int    `json:"permission_id"`
 		}
 
+		surveyID := c.Params("surveyId")
+		if surveyID == "" {
+			return presenter.BadRequest(c, errors.New("survey ID is required"))
+		}
+		surveyUUID, err := uuid.Parse(surveyID)
+		if err != nil {
+			return presenter.BadRequest(c, errors.New("invalid survey ID format"))
+		}
+
 		if err := c.BodyParser(&req); err != nil {
 			return presenter.BadRequest(c, err)
 		}
 
-		userID, err := uuid.Parse(req.UserID)
+		userUUID, err := uuid.Parse(req.UserID)
 		if err != nil {
-			return presenter.BadRequest(c, errors.New("invalid user ID"))
+			return presenter.BadRequest(c, errors.New("invalid user ID format"))
 		}
 
-		hasPermission, err := roleService.CheckPermission(c.Context(), userID, req.PermissionID)
+		hasPermission, err := roleService.CheckSurveyPermission(c.Context(), surveyUUID, userUUID, req.PermissionID)
 		if err != nil {
 			return presenter.InternalServerError(c, err)
 		}

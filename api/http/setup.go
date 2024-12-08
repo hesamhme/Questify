@@ -40,11 +40,9 @@ func registerGlobalRoutes(router fiber.Router, app *service.AppContainer) {
 	router.Post("/login", handlers.LoginUser(app.AuthService()))
 	router.Get("/refresh", handlers.RefreshToken(app.AuthService()))
 
-	// Role and permissions management
-	router.Post("/roles", handlers.CreateRole(app.RoleService()))
-	router.Get("/roles", handlers.GetAllRoles(app.RoleService()))
-	router.Post("/roles/assign", handlers.AssignRoleToUser(app.RoleService()))
-	router.Get("/roles/check-permission", handlers.CheckUserPermission(app.RoleService()))
+	// Survey-specific role management
+	router.Post("/:surveyId/roles/assign", handlers.AssignRoleToSurveyUser(app.RoleService()))
+	router.Get("/:surveyId/roles/check-permission", handlers.CheckSurveyPermission(app.RoleService()))
 
 }
 

@@ -48,8 +48,30 @@ type Repository interface {
     AssignRoleToUser(ctx context.Context, userRole *UserRole) error
     GetRolesByUserID(ctx context.Context, userID uuid.UUID) ([]Role, error)
     RemoveUserRole(ctx context.Context, userID, roleID uuid.UUID) error
+	AssignRoleToSurveyUser(ctx context.Context, surveyUserRole *SurveyUserRole) error
+	GetRolesBySurveyAndUser(ctx context.Context, surveyID uuid.UUID, userID uuid.UUID) ([]Role, error)
 }
 
+
+// SurveyUserRole represents a user's role in a specific survey.
+type SurveyUserRole struct {
+	ID        uuid.UUID
+	SurveyID  uuid.UUID
+	UserID    uuid.UUID
+	RoleID    uuid.UUID
+	AssignedAt time.Time
+	ExpiresAt *time.Time
+}
+
+
+// Permission IDs (constants for predefined permissions)
+const (
+	PermissionIDViewSurvey     = 1 // View Survey permission ID
+	PermissionIDVote           = 2 // Vote permission ID
+	PermissionIDEditSurvey     = 3 // Edit Survey permission ID
+	PermissionIDManageRoles    = 4 // Manage Roles permission ID
+	PermissionIDViewReports    = 5 // View Reports permission ID
+)
 
 
 
