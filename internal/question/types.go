@@ -17,6 +17,7 @@ type Repo interface {
 	GetAnswersByUser(ctx context.Context, userID, surveyID uuid.UUID, limit, offset int) ([]Answer, error) // Updated
 	GetBySurveyID(ctx context.Context, surveyID uuid.UUID) ([]*Question, error)
 	GetMaxQuestionIndexBySurveyID(ctx context.Context, surveyId uuid.UUID) (uint, error)
+	GetAnswerByUserAndQuestion(ctx context.Context, userID, questionID uuid.UUID) (*Answer, error)
 }
 
 var (
@@ -29,6 +30,11 @@ var (
 	ErrNoMoreQuestionsForThisSurvey                       = errors.New("no more questions available")
 	ErrQuestionNotFound                                   = errors.New("Question not found")
 	ErrCannotChangeSurveyId                               = errors.New("Can not change survey id")
+	ErrAnswerNotFound                                     = errors.New("Answer not found")
+	ErrUserIDRequired                                     = errors.New("user ID is required")
+	ErrQuestionIDRequired                                 = errors.New("question ID is required")
+	ErrInvalidAnswerForQuestionType                       = errors.New("invalid answer for the question type")
+	ErrUserAlreadyAnswered                                = errors.New("user has already answered this question")
 )
 
 type QuestionType int

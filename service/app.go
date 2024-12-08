@@ -153,10 +153,6 @@ func (a *AppContainer) SMTPClient() *smtp.SMTPClient {
 	return a.smtpClient
 }
 
-func (s *SurveyService) CreateAnswer(ctx context.Context, answer *question.Answer) error {
-	return s.questionOps.CreateAnswer(ctx, answer)
-}
-
 func (a *AppContainer) AuthServiceFromCtx(ctx context.Context) *AuthService {
 	tx, ok := valuecontext.TryGetTxFromContext(ctx)
 	if !ok {
@@ -174,5 +170,8 @@ func (a *AppContainer) AuthServiceFromCtx(ctx context.Context) *AuthService {
 		a.cfg.Server.TokenExpMinutes,
 		a.cfg.Server.RefreshTokenExpMinutes)
 		// walletOps should be here
+}
 
+func (s *SurveyService) CreateAnswer(ctx context.Context, answer *question.Answer) error {
+	return s.questionOps.CreateAnswer(ctx, answer)
 }

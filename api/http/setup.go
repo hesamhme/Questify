@@ -46,6 +46,15 @@ func registerGlobalRoutes(router fiber.Router, app *service.AppContainer) {
 
 }
 
+func registerUserRoutes(router fiber.Router, app *service.AppContainer, secret []byte) {
+	router = router.Group("/users")
+
+	router.Get("",
+		middlewares.Auth(secret),
+		handlers.GetAllVerifiedUsers(app.UserService()),
+	)
+}
+
 func registerSurveyRoutes(cfg config.Config, router fiber.Router, app *service.AppContainer) {
 	router.Use(middlewares.Auth([]byte(cfg.Server.TokenSecret)))
 	router = router.Group("/survey")
@@ -56,16 +65,7 @@ func registerSurveyRoutes(cfg config.Config, router fiber.Router, app *service.A
 	router.Get("/:surveyId/question/previous", handlers.GetPreviousQuestion(app.SurveyService()))
 	router.Get("/:surveyId/question/:questionId", handlers.GetQuestion(app.SurveyService()))
 	router.Put("/:surveyId/question/:questionId", handlers.UpdateQuestion(app.SurveyService()))
-	router.Post("/question/:questionId/answer", handlers.CreateAnswer(app.SurveyService())) // Add endpoint for submitting answers
-}
-
-func registerUserRoutes(router fiber.Router, app *service.AppContainer, secret []byte) {
-	router = router.Group("/users")
-
-	router.Get("",
-		middlewares.Auth(secret),
-		handlers.GetAllVerifiedUsers(app.UserService()),
-	)
+	router.Post("/question/:questionId/answer", handlers.CreateAnswer(app.SurveyService()))
 }
 
 // func userRoleChecker() fiber.Handler {
