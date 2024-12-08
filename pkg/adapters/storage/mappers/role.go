@@ -97,21 +97,24 @@ func UserRoleDomainToEntity(domain role.UserRole) entities.UserRole {
 	}
 }
 
-
-// Batch UserRole Entity to Domain
-func BatchUserRoleEntityToDomain(entities []entities.UserRole) []role.UserRole {
-	domains := make([]role.UserRole, len(entities))
-	for i, entity := range entities {
-		domains[i] = UserRoleEntityToDomain(entity)
+// Map SurveyUserRole Entity to Domain
+func SurveyUserRoleEntityToDomain(entity entities.SurveyUserRole) role.SurveyUserRole {
+	return role.SurveyUserRole{
+		UserID:     entity.UserID,
+		SurveyID:   entity.SurveyID,
+		RoleID:     entity.RoleID,
+		AssignedAt: entity.AssignedAt,
+		ExpiresAt:  entity.ExpiresAt,
 	}
-	return domains
 }
 
-// Batch UserRole Domain to Entity
-func BatchUserRoleDomainToEntity(domains []role.UserRole) []entities.UserRole {
-	entities := make([]entities.UserRole, len(domains))
-	for i, domain := range domains {
-		entities[i] = UserRoleDomainToEntity(domain)
+// Map SurveyUserRole Domain to Entity
+func SurveyUserRoleDomainToEntity(domain role.SurveyUserRole) entities.SurveyUserRole {
+	return entities.SurveyUserRole{
+		UserID:     domain.UserID,
+		SurveyID:   domain.SurveyID,
+		RoleID:     domain.RoleID,
+		AssignedAt: domain.AssignedAt,
+		ExpiresAt:  domain.ExpiresAt,
 	}
-	return entities
 }

@@ -89,3 +89,41 @@ func (o *Ops) CheckPermission(ctx context.Context, userID uuid.UUID, permissionI
 func (o *Ops) GetAllRoles(ctx context.Context) ([]Role, error) {
 	return o.repo.GetAllRoles(ctx)
 }
+
+func (o *Ops) AssignRoleToSurveyUser(ctx context.Context, surveyID uuid.UUID, userID uuid.UUID, roleID uuid.UUID, timeout *time.Duration) error {
+	surveyUserRole := &SurveyUserRole{
+		ID:        uuid.New(),
+		SurveyID:  surveyID,
+		UserID:    userID,
+		RoleID:    roleID,
+		AssignedAt: time.Now(),
+	}
+
+	if timeout != nil {
+		expiration := time.Now().Add(*timeout)
+		surveyUserRole.ExpiresAt = &expiration
+	}
+
+	return o.repo.AssignRoleToSurveyUser(ctx, surveyUserRole)
+}
+
+func (o *Ops) GetRolesBySurveyAndUser(ctx context.Context, surveyID uuid.UUID, userID uuid.UUID) ([]Role, error) {
+	return o.repo.GetRolesBySurveyAndUser(ctx, surveyID, userID)
+}
+
+func (o *Ops) CheckSurveyPermission(ctx context.Context, surveyID uuid.UUID, userID uuid.UUID, permissionID int) (bool, error) {
+	roles, err := o.repo.GetRolesBySurveyAndUser(ctx, surveyID, userID)
+	if err != nil {
+		return false, err
+	}
+
+	for _, role := range roles {
+		for _, perm := range role.Permissions {
+			if perm.ID == permissionID {
+				return true, nil
+			}
+		}
+	}
+
+	return false, nil
+}

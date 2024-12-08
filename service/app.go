@@ -155,6 +155,7 @@ func (a *AppContainer) SMTPClient() *smtp.SMTPClient {
 
 func (s *SurveyService) CreateAnswer(ctx context.Context, answer *question.Answer) error {
 	return s.questionOps.CreateAnswer(ctx, answer)
+}
 
 func (a *AppContainer) AuthServiceFromCtx(ctx context.Context) *AuthService {
 	tx, ok := valuecontext.TryGetTxFromContext(ctx)

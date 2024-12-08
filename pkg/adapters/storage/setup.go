@@ -54,6 +54,7 @@ func Migrate(db *gorm.DB) error {
 		&entities.Question{},
 		&entities.Answer{},
 		&entities.QuestionChoices{},
+		&entities.SurveyUserRole{},
 	)
 	if err != nil {
 		return fmt.Errorf("migration failed: %w", err)

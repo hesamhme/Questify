@@ -29,3 +29,18 @@ type UserRole struct {
 	ExpiresAt *time.Time `gorm:"type:timestamp"`
 	Role      Role       `gorm:"foreignKey:RoleID;constraint:OnDelete:CASCADE"`
 }
+
+
+// SurveyUserRole represents the association between a user, role, and survey.
+type SurveyUserRole struct {
+	ID        uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
+	SurveyID  uuid.UUID `gorm:"type:uuid;not null"`
+	UserID    uuid.UUID `gorm:"type:uuid;not null"`
+	RoleID    uuid.UUID `gorm:"type:uuid;not null"`
+	AssignedAt time.Time `gorm:"autoCreateTime"`
+	ExpiresAt *time.Time `gorm:"type:timestamp"`
+
+	Survey Survey `gorm:"foreignKey:SurveyID;constraint:OnDelete:CASCADE"`
+	User   User   `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
+	Role   Role   `gorm:"foreignKey:RoleID;constraint:OnDelete:CASCADE"`
+}
