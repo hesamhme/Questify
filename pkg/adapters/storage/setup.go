@@ -19,11 +19,10 @@ func AddExtension(db *gorm.DB) error {
 	return db.Exec(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`).Error
 }
 
-
 func Migrate(db *gorm.DB) error {
 	migrator := db.Migrator()
 
-	// Ensure the table exists
+	// Ensure the User table exists
 	if !migrator.HasTable(&entities.User{}) {
 		if err := migrator.CreateTable(&entities.User{}); err != nil {
 			return err
@@ -43,7 +42,48 @@ func Migrate(db *gorm.DB) error {
 		}
 	}
 
-	// Perform other migrations
-	return migrator.AutoMigrate(&entities.User{})
+	// Perform other migrations for roles, permissions, and user_roles
+	err := migrator.AutoMigrate(
+		&entities.User{},
+		&entities.Role{},
+		&entities.Permission{},
+		&entities.UserRole{},
+		&entities.Survey{},
+		&entities.SurveyRequirements{},
+		&entities.City{},
+		&entities.Question{},
+		&entities.Answer{},
+		&entities.QuestionChoices{},
+	)
+	if err != nil {
+		return fmt.Errorf("migration failed: %w", err)
+	}
+
+	// Seed permissions after migrations
+	err = SeedPermissions(db)
+	if err != nil {
+		return fmt.Errorf("failed to seed permissions: %w", err)
+	}
+
+	return nil
 }
 
+// SeedPermissions seeds initial permissions into the database
+func SeedPermissions(db *gorm.DB) error {
+	permissions := []entities.Permission{
+		{ID: 1, Description: "View Survey"},
+		{ID: 2, Description: "Participate in Survey"},
+		{ID: 3, Description: "See Results"},
+		{ID: 4, Description: "Create Survey"},
+	}
+
+	for _, perm := range permissions {
+		// Use FirstOrCreate to avoid duplicate entries
+		err := db.FirstOrCreate(&perm, entities.Permission{ID: perm.ID}).Error
+		if err != nil {
+			return fmt.Errorf("failed to seed permission ID %d: %w", perm.ID, err)
+		}
+	}
+	return nil
+
+}
