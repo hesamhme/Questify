@@ -116,3 +116,41 @@ func CheckSurveyPermission(roleService *service.RoleService) fiber.Handler {
 		})
 	}
 }
+
+
+// CreateRole creates a new role with specified permissions.
+func CreateRole(roleService *service.RoleService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var req struct {
+			Name         string `json:"name"`
+			PermissionIDs []int `json:"permissions"`
+		}
+
+		if err := c.BodyParser(&req); err != nil {
+			return presenter.BadRequest(c, err)
+		}
+
+		if req.Name == "" || len(req.PermissionIDs) == 0 {
+			return presenter.BadRequest(c, errors.New("invalid role data"))
+		}
+
+		role, err := roleService.CreateRole(c.Context(), req.Name, req.PermissionIDs)
+		if err != nil {
+			return presenter.InternalServerError(c, err)
+		}
+
+		return presenter.Created(c, "Role created successfully", role)
+	}
+}
+
+// GetAllRoles retrieves all roles in the system.
+func GetAllRoles(roleService *service.RoleService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		roles, err := roleService.GetAllRoles(c.Context())
+		if err != nil {
+			return presenter.InternalServerError(c, err)
+		}
+
+		return presenter.OK(c, "Roles retrieved successfully", roles)
+	}
+}
