@@ -2,7 +2,8 @@ package handlers
 
 import (
 	"Questify/api/http/handlers/presenter"
-	"Questify/internal/role"
+	"Questify/internal/survey"
+	"Questify/internal/user"
 	jw2 "Questify/pkg/jwt"
 	"Questify/service"
 	"errors"
@@ -59,9 +60,15 @@ func AssignRoleToSurveyUser(roleService *service.RoleService) fiber.Handler {
 		}
 		fmt.Printf("User claims retrieved successfully: %+v\n", claims)
 
-		isOwner, err := roleService.CheckSurveyPermission(c.Context(), surveyUUID, claims.UserID, role.PermissionIDManageRoles)
-		if err != nil || !isOwner {
-			return presenter.Forbidden(c, errors.New("user does not have the necessary permissions"))
+		isOwner, err := roleService.CheckSurveyPermission(c.Context(), surveyUUID, claims.UserID, 0)
+		if errors.Is(err, user.ErrUserNotFound) {
+			return presenter.BadRequest(c, err)
+		}
+		if errors.Is(err, survey.ErrSurveyNotFound) {
+			return presenter.BadRequest(c, err)
+		}
+		if err != nil || !isOwner || errors.Is(err, service.ErrNotOwner) {
+			return presenter.Forbidden(c, err)
 		}
 
 		err = roleService.AssignRoleToSurveyUser(c.Context(), surveyUUID, userUUID, roleUUID, timeout)

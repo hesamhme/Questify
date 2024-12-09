@@ -51,5 +51,14 @@ func validateSurvey(s *Survey) error {
 }
 
 func (o *Ops) GetByID(ctx context.Context, id uuid.UUID) (*Survey, error) {
-	return o.repo.GetByID(ctx, id)
+
+	s, err := o.repo.GetByID(ctx, id)
+
+	if err!=nil{
+		return nil, err
+	}
+	if s == nil{
+		return nil, ErrSurveyNotFound
+	}
+	return s, nil
 }

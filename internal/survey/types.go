@@ -7,12 +7,14 @@ import (
 	"time"
 )
 
+
 type Repo interface {
 	Create(ctx context.Context, survey *Survey) error
 	GetByID(ctx context.Context, id uuid.UUID) (*Survey, error)
 }
 
 var (
+	ErrSurveyNotFound = errors.New("survey not found")
 	ErrInvalidTitle              = errors.New("invalid title: must not be empty and should be less than 255 characters")
 	ErrInvalidOwnerID            = errors.New("invalid owner ID")
 	ErrInvalidTimeRange          = errors.New("end time must be after start time")

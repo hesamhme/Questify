@@ -7,8 +7,8 @@ import (
 	"log"
 
 	"Questify/config"
-	"Questify/internal/user"
 	"Questify/internal/role"
+	"Questify/internal/user"
 	"Questify/pkg/adapters/storage"
 	"Questify/pkg/smtp"
 	"Questify/pkg/valuecontext"
@@ -17,14 +17,13 @@ import (
 )
 
 type AppContainer struct {
-	cfg         config.Config
-	dbConn      *gorm.DB
-	userService *UserService
-	authService *AuthService
-	smtpClient  *smtp.SMTPClient
-	roleService *RoleService
+	cfg           config.Config
+	dbConn        *gorm.DB
+	userService   *UserService
+	authService   *AuthService
+	smtpClient    *smtp.SMTPClient
+	roleService   *RoleService
 	surveyService *SurveyService
-
 }
 
 func NewAppContainer(cfg config.Config) (*AppContainer, error) {
@@ -40,7 +39,6 @@ func NewAppContainer(cfg config.Config) (*AppContainer, error) {
 	app.setRoleService()
 	app.setSurveyService()
 
-
 	return app, nil
 }
 
@@ -53,9 +51,9 @@ func (a *AppContainer) setRoleService() {
 		return
 	}
 
-	a.roleService = NewRoleService(role.NewOps(storage.NewRoleRepo(a.dbConn)))
+	a.roleService = NewRoleService(role.NewOps(storage.NewRoleRepo(a.dbConn)),
+		survey.NewOps(storage.NewSurveyRepo(a.dbConn)), user.NewOps(storage.NewUserRepo(a.dbConn), a.SMTPClient()))
 }
-
 
 func (a *AppContainer) RawRBConnection() *gorm.DB {
 	return a.dbConn
@@ -169,7 +167,7 @@ func (a *AppContainer) AuthServiceFromCtx(ctx context.Context) *AuthService {
 		[]byte(a.cfg.Server.TokenSecret),
 		a.cfg.Server.TokenExpMinutes,
 		a.cfg.Server.RefreshTokenExpMinutes)
-		// walletOps should be here
+	// walletOps should be here
 }
 
 func (s *SurveyService) CreateAnswer(ctx context.Context, answer *question.Answer) error {
