@@ -10,6 +10,7 @@ import (
 type Repo interface {
 	Create(ctx context.Context, survey *Survey) error
 	GetByID(ctx context.Context, id uuid.UUID) (*Survey, error)
+	GetUserSurveys(ctx context.Context, userID uuid.UUID, page, pageSize int) ([]Survey, int64, error)
 }
 
 var (

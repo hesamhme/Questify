@@ -3,6 +3,7 @@ package mappers
 import (
 	"Questify/internal/survey"
 	"Questify/pkg/adapters/storage/entities"
+	"Questify/pkg/fp"
 )
 
 func SurveyEntityToDomain(entity entities.Survey) survey.Survey {
@@ -18,6 +19,10 @@ func SurveyEntityToDomain(entity entities.Survey) survey.Survey {
 		ParticipationLimit: entity.ParticipationLimit,
 		ResponseTimeLimit:  entity.ResponseTimeLimit,
 	}
+}
+
+func BatchSurveyEntityToDomain(entities []entities.Survey) []survey.Survey {
+	return fp.Map(entities, SurveyEntityToDomain)
 }
 
 func SurveyDomainToEntity(domain *survey.Survey) *entities.Survey {
