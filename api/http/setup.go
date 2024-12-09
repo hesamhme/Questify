@@ -43,6 +43,7 @@ func registerGlobalRoutes(router fiber.Router, app *service.AppContainer) {
 	// Role and permissions management
 	router.Post("/roles", handlers.CreateRole(app.RoleService()))
 	router.Get("/roles", handlers.GetAllRoles(app.RoleService()))
+	router.Delete("roles/delete", handlers.DeleteRoles(app.RoleService()))
 }
 
 func registerUserRoutes(router fiber.Router, app *service.AppContainer, secret []byte) {
@@ -69,4 +70,3 @@ func registerSurveyRoutes(cfg config.Config, router fiber.Router, app *service.A
 	router.Post("/:surveyId/roles/assign", middlewares.Auth([]byte(cfg.Server.TokenSecret)), handlers.AssignRoleToSurveyUser(app.RoleService()))
 	router.Get("/:surveyId/roles/check-permission", handlers.CheckSurveyPermission(app.RoleService()))
 }
-

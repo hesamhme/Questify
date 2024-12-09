@@ -41,6 +41,7 @@ func (o *Ops) CreateRole(ctx context.Context, name string, permissionIDs []int) 
 	return role, nil
 }
 
+
 // AssignRoleToUser assigns a role to a user with an optional timeout.
 func (o *Ops) AssignRoleToUser(ctx context.Context, userID uuid.UUID, roleID uuid.UUID, timeout *time.Duration) error {
 	userRole := &UserRole{
@@ -126,4 +127,35 @@ func (o *Ops) CheckSurveyPermission(ctx context.Context, surveyID uuid.UUID, use
 	}
 
 	return false, nil
+}
+
+// DeleteRole removes a role by its ID.
+func (o *Ops) DeleteRole(ctx context.Context, roleID uuid.UUID) error {
+    // Check if the role exists before deleting
+    _, err := o.repo.GetRoleByID(ctx, roleID)
+    if err != nil {
+        return ErrRoleNotFound
+    }
+
+    // Log the deletion attempt for debugging/auditing purposes
+
+    // Perform the deletion
+    if err := o.repo.DeleteRole(ctx, roleID); err != nil {
+        return err
+    }
+
+    return nil
+}
+// GetRoleByID fetches a role by its ID.
+func (o *Ops) GetRoleByID(ctx context.Context, roleID uuid.UUID) (*Role, error) {
+    // Fetch the role using the repository
+    role, err := o.repo.GetRoleByID(ctx, roleID)
+    if err != nil {
+        if err == ErrRoleNotFound {
+            return nil, ErrRoleNotFound
+        }
+        return nil, err
+    }
+
+    return role, nil
 }

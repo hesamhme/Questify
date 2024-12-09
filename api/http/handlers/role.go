@@ -154,3 +154,51 @@ func GetAllRoles(roleService *service.RoleService) fiber.Handler {
 		return presenter.OK(c, "Roles retrieved successfully", roles)
 	}
 }
+
+func DeleteRoles(roleService *service.RoleService) fiber.Handler {
+    return func(c *fiber.Ctx) error {
+        var req struct {
+            RoleIDs []string `json:"role_ids"`
+        }
+
+        // Parse the request body
+        if err := c.BodyParser(&req); err != nil {
+            return presenter.BadRequest(c, errors.New("invalid request body"))
+        }
+
+        // Validate request body
+        if len(req.RoleIDs) == 0 {
+            return presenter.BadRequest(c, errors.New("role IDs are required"))
+        }
+
+        // Get user claims
+        claims, ok := c.Locals(UserClaimKey).(*jw2.UserClaims)
+        if !ok || claims == nil {
+            return presenter.Unauthorized(c, errors.New("user not authenticated"))
+        }
+
+        // Iterate over RoleIDs and delete them if the user is the creator
+        for _, roleID := range req.RoleIDs {
+            roleUUID, err := uuid.Parse(roleID)
+            if err != nil {
+                return presenter.BadRequest(c, fmt.Errorf("invalid role ID format for: %s", roleID))
+            }
+
+            // Fetch the role to verify the creator
+            _, err = roleService.GetRoleByID(c.Context(), roleUUID)
+            if err != nil {
+                return presenter.BadRequest(c, fmt.Errorf("role not found for ID: %s", roleID))
+            }
+
+
+            // Delete the role
+            err = roleService.DeleteRole(c.Context(), roleUUID)
+            if err != nil {
+                return presenter.InternalServerError(c, fmt.Errorf("failed to delete role: %s", roleID))
+            }
+        }
+
+        return presenter.OK(c, "Roles deleted successfully", nil)
+    }
+}
+

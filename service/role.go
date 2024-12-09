@@ -36,6 +36,11 @@ func (s *RoleService) CreateRole(ctx context.Context, name string, permissionIDs
 	return s.roleOps.CreateRole(ctx, name, permissionIDs)
 }
 
+func (s *RoleService) DeleteRole(ctx context.Context, roleID uuid.UUID) error {
+	return s.roleOps.DeleteRole(ctx, roleID)
+}
+
+
 // AssignRoleToUser assigns a role to a user with an optional timeout.
 func (s *RoleService) AssignRoleToUser(ctx context.Context, userID uuid.UUID, roleID uuid.UUID, timeout *time.Duration) error {
 	return s.roleOps.AssignRoleToUser(ctx, userID, roleID, timeout)
@@ -97,4 +102,8 @@ func (s *RoleService) CheckSurveyPermission(ctx context.Context, surveyID uuid.U
 // CheckSurveyPermission checks if a user has a specific permission for a survey.
 func (s *RoleService) GetRolesBySurveyAndUser(ctx context.Context, surveyID uuid.UUID, userID uuid.UUID) ([]role.Role, error) {
 	return s.roleOps.GetRolesBySurveyAndUser(ctx, surveyID, userID)
+}
+
+func (s *RoleService) GetRoleByID(ctx context.Context, roleID uuid.UUID) (*role.Role, error) {
+    return s.roleOps.GetRoleByID(ctx, roleID)
 }
