@@ -149,6 +149,44 @@ func CreateAnswer(surveyService *service.SurveyService) fiber.Handler {
 	}
 }
 
+func GetUserSurveys(surveyService *service.SurveyService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		claims := c.Locals(jwt.UserClaimKey)
+		userClaims, ok := claims.(*jwt.UserClaims)
+		if !ok || userClaims.UserID == uuid.Nil {
+			return presenter.Unauthorized(c, errors.New("User not authenticated"))
+		}
+
+		page, pageSize := pageAndPageSize(c)
+
+		surveys, total, err := surveyService.GetUserSurvey(c.Context(), userClaims.UserID, page, pageSize)
+		if err != nil {
+			return presenter.InternalServerError(c, fiber.ErrInternalServerError)
+		}
+
+		return c.JSON(fiber.Map{
+			"surveys":  surveys,
+			"total":    total,
+			"page":     page,
+			"pageSize": pageSize,
+		})
+
+	}
+}
+
+func pageAndPageSize(c *fiber.Ctx) (int, int) {
+	page, pageSize := c.QueryInt("page"), c.QueryInt("page_size")
+	if page <= 0 {
+		page = 1
+	}
+
+	if pageSize <= 0 {
+		pageSize = 20
+	}
+
+	return page, pageSize
+}
+
 func GetNextQuestion(questionService *service.SurveyService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		surveyID := c.Params("surveyId")

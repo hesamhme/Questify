@@ -179,3 +179,7 @@ func (s *SurveyService) GetSurvey(ctx context.Context, surveyID uuid.UUID) (*sur
 
 	return fetchedSurvey, nil
 }
+
+func (s *SurveyService) GetUserSurvey(ctx context.Context, userId uuid.UUID, page, pageSize int) ([]survey.Survey, int64, error) {
+	return s.surveyOps.GetUserSurvey(ctx, userId, page, pageSize)
+}

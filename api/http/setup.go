@@ -59,6 +59,7 @@ func registerSurveyRoutes(cfg config.Config, router fiber.Router, app *service.A
 	router.Use(middlewares.Auth([]byte(cfg.Server.TokenSecret)))
 	router = router.Group("/survey")
 	router.Post("", handlers.CreateSurvey(app.SurveyService()))
+	router.Get("", handlers.GetUserSurveys(app.SurveyService()))
 	router.Post("/:surveyId", handlers.GetSurvey(app.SurveyService()))
 	router.Post("/:surveyId/question", handlers.CreateQuestion(app.SurveyService()))
 	router.Get("/:surveyId/question/next", handlers.GetNextQuestion(app.SurveyService()))

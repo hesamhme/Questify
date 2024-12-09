@@ -40,3 +40,33 @@ func (r *surveyRepo) GetByID(ctx context.Context, id uuid.UUID) (*survey.Survey,
 	domainSurvey := mappers.SurveyEntityToDomain(entitySurvey)
 	return &domainSurvey, nil
 }
+
+func (r *surveyRepo) GetUserSurveys(ctx context.Context, userID uuid.UUID, page, pageSize int) ([]survey.Survey, int64, error) {
+	var surveys []entities.Survey
+	var total int64
+
+	offset := (page - 1) * pageSize
+
+	err := r.db.WithContext(ctx).
+		Where("owner_id = ?", userID).
+		Order("created_at DESC").
+		Offset(offset).
+		Limit(pageSize).
+		Find(&surveys).
+		Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	err = r.db.WithContext(ctx).
+		Model(&entities.Survey{}).
+		Where("owner_id = ?", userID).
+		Count(&total).
+		Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	domainSurveys := mappers.BatchSurveyEntityToDomain(surveys)
+	return domainSurveys, total, nil
+}
