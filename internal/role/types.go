@@ -41,6 +41,7 @@ type UserRole struct {
 // Repository defines methods for role and permission management.
 type Repository interface {
     CreateRole(ctx context.Context, role *Role) error
+	DeleteRole(ctx context.Context, roleID uuid.UUID) error
     GetRoleByID(ctx context.Context, roleID uuid.UUID) (*Role, error)
     GetRoleByName(ctx context.Context, name string) (*Role, error)
     GetAllRoles(ctx context.Context) ([]Role, error)

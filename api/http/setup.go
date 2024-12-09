@@ -40,10 +40,10 @@ func registerGlobalRoutes(router fiber.Router, app *service.AppContainer) {
 	router.Post("/login", handlers.LoginUser(app.AuthService()))
 	router.Get("/refresh", handlers.RefreshToken(app.AuthService()))
 
-	// Survey-specific role management
-	router.Post("/:surveyId/roles/assign", handlers.AssignRoleToSurveyUser(app.RoleService()))
-	router.Get("/:surveyId/roles/check-permission", handlers.CheckSurveyPermission(app.RoleService()))
-
+	// Role and permissions management
+	router.Post("/roles", handlers.CreateRole(app.RoleService()))
+	router.Get("/roles", handlers.GetAllRoles(app.RoleService()))
+	router.Delete("roles/delete", handlers.DeleteRoles(app.RoleService()))
 }
 
 func registerUserRoutes(router fiber.Router, app *service.AppContainer, secret []byte) {
@@ -67,41 +67,7 @@ func registerSurveyRoutes(cfg config.Config, router fiber.Router, app *service.A
 	router.Get("/:surveyId/question/:questionId", handlers.GetQuestion(app.SurveyService()))
 	router.Put("/:surveyId/question/:questionId", handlers.UpdateQuestion(app.SurveyService()))
 	router.Post("/question/:questionId/answer", handlers.CreateAnswer(app.SurveyService()))
+	// Survey-specific role management
+	router.Post("/:surveyId/roles/assign", middlewares.Auth([]byte(cfg.Server.TokenSecret)), handlers.AssignRoleToSurveyUser(app.RoleService()))
+	router.Get("/:surveyId/roles/check-permission", handlers.CheckSurveyPermission(app.RoleService()))
 }
-
-// func userRoleChecker() fiber.Handler {
-// 	return middlewares.RoleChecker("user")
-// }
-
-// func registerBoardRoutes(router fiber.Router, app *service.AppContainer, secret []byte, loggerMiddleWare fiber.Handler) {
-// 	router = router.Group("/boards")
-// 	router.Use(loggerMiddleWare)
-
-// 	router.Post("",
-// 		middlewares.SetTransaction(adapters.NewGormCommitter(app.RawDBConnection())),
-// 		middlewares.Auth(secret),
-// 		handlers.CreateUserBoard(app.BoardServiceFromCtx),
-// 	)
-// 	router.Get("/my-boards",
-// 		middlewares.Auth(secret),
-// 		handlers.GetUserBoards(app.BoardService()),
-// 	)
-// 	router.Get("/publics",
-// 		middlewares.Auth(secret),
-// 		middlewares.SetupCacheMiddleware(5),
-// 		handlers.GetPublicBoards(app.BoardService()),
-// 	)
-// 	router.Get("/:boardID",
-// 		middlewares.Auth(secret),
-// 		handlers.GetFullBoardByID(app.BoardService()),
-// 	)
-
-// 	router.Delete("/:boardID",
-// 		middlewares.Auth(secret),
-// 		handlers.DeleteBoard(app.BoardService()),
-// 	)
-
-// 	router.Post("/invite", middlewares.SetTransaction(adapters.NewGormCommitter(app.RawDBConnection())),
-// 		middlewares.Auth(secret),
-// 		handlers.InviteToBoard(app.BoardServiceFromCtx))
-// }

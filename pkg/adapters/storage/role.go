@@ -158,3 +158,19 @@ func (r *roleRepo) GetRolesBySurveyAndUser(ctx context.Context, surveyID, userID
 
 	return roles, nil
 }
+
+// DeleteRole removes a role by its ID.
+func (r *roleRepo) DeleteRole(ctx context.Context, roleID uuid.UUID) error {
+    // Attempt to delete the role by ID
+    result := r.db.WithContext(ctx).Where("id = ?", roleID).Delete(&entities.Role{})
+    if result.Error != nil {
+        return fmt.Errorf("failed to delete role: %w", result.Error)
+    }
+
+    // Check if a record was deleted
+    if result.RowsAffected == 0 {
+        return role.ErrRoleNotFound
+    }
+
+    return nil
+}

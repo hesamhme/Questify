@@ -17,12 +17,12 @@ func CreateQuestion(questionService *service.SurveyService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		surveyId := c.Params("surveyId")
 		if surveyId == "" {
-			return presenter.BadRequest(c, errors.New("Survey ID is required"))
+			return presenter.BadRequest(c, errors.New("Survey ID is Required"))
 		}
 
 		surveyUUID, err := uuid.Parse(surveyId)
 		if err != nil {
-			return presenter.BadRequest(c, errors.New("Invalid Survey ID format"))
+			return presenter.BadRequest(c, errors.New("Invalid Survey ID Format"))
 		}
 
 		var question presenter.Question
@@ -111,7 +111,7 @@ func CreateAnswer(surveyService *service.SurveyService) fiber.Handler {
 
 		questionUUID, err := uuid.Parse(questionID)
 		if err != nil {
-			return presenter.BadRequest(c, errors.New("Invalid Question ID format"))
+			return presenter.BadRequest(c, errors.New("Invalid Question ID Format"))
 		}
 
 		claims := c.Locals(jwt.UserClaimKey)
