@@ -40,10 +40,6 @@ func registerGlobalRoutes(router fiber.Router, app *service.AppContainer) {
 	router.Post("/login", handlers.LoginUser(app.AuthService()))
 	router.Get("/refresh", handlers.RefreshToken(app.AuthService()))
 
-	// Survey-specific role management
-	router.Post("/:surveyId/roles/assign", handlers.AssignRoleToSurveyUser(app.RoleService()))
-	router.Get("/:surveyId/roles/check-permission", handlers.CheckSurveyPermission(app.RoleService()))
-
 }
 
 func registerUserRoutes(router fiber.Router, app *service.AppContainer, secret []byte) {
@@ -66,6 +62,9 @@ func registerSurveyRoutes(cfg config.Config, router fiber.Router, app *service.A
 	router.Get("/:surveyId/question/:questionId", handlers.GetQuestion(app.SurveyService()))
 	router.Put("/:surveyId/question/:questionId", handlers.UpdateQuestion(app.SurveyService()))
 	router.Post("/question/:questionId/answer", handlers.CreateAnswer(app.SurveyService()))
+	// Survey-specific role management
+	router.Post("/:surveyId/roles/assign", middlewares.Auth([]byte(cfg.Server.TokenSecret)), handlers.AssignRoleToSurveyUser(app.RoleService()))
+	router.Get("/:surveyId/roles/check-permission", handlers.CheckSurveyPermission(app.RoleService()))
 }
 
 // func userRoleChecker() fiber.Handler {

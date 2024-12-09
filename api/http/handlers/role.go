@@ -3,8 +3,10 @@ package handlers
 import (
 	"Questify/api/http/handlers/presenter"
 	"Questify/internal/role"
+	jw2 "Questify/pkg/jwt"
 	"Questify/service"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -17,13 +19,14 @@ func AssignRoleToSurveyUser(roleService *service.RoleService) fiber.Handler {
 		var req struct {
 			UserID  string `json:"user_id"`
 			RoleID  string `json:"role_id"`
-			Timeout int    `json:"timeout"` // in minutes
+			Timeout int    `json:"timeout"`
 		}
 
 		surveyID := c.Params("surveyId")
 		if surveyID == "" {
 			return presenter.BadRequest(c, errors.New("survey ID is required"))
 		}
+
 		surveyUUID, err := uuid.Parse(surveyID)
 		if err != nil {
 			return presenter.BadRequest(c, errors.New("invalid survey ID format"))
@@ -49,11 +52,12 @@ func AssignRoleToSurveyUser(roleService *service.RoleService) fiber.Handler {
 			timeout = &duration
 		}
 
-		// Validate if the user has the right permissions or is the survey owner
-		claims := c.Locals("user_claims").(*presenter.UserClaims)
-		if claims.UserID == uuid.Nil {
+		claims, ok := c.Locals(UserClaimKey).(*jw2.UserClaims)
+		if !ok || claims == nil {
+			fmt.Println("User claims are not found in context or are invalid")
 			return presenter.Unauthorized(c, errors.New("user not authenticated"))
 		}
+		fmt.Printf("User claims retrieved successfully: %+v\n", claims)
 
 		isOwner, err := roleService.CheckSurveyPermission(c.Context(), surveyUUID, claims.UserID, role.PermissionIDManageRoles)
 		if err != nil || !isOwner {

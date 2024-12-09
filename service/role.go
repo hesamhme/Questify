@@ -62,8 +62,8 @@ func (s *RoleService) GetSurveyRolesByUser(ctx context.Context, surveyID uuid.UU
 }
 
 // CheckSurveyPermission checks if a user has a specific permission for a survey.
-func (s *RoleService) CheckSurveyPermission(ctx context.Context, surveyID uuid.UUID, userID uuid.UUID, permissionID int) (bool, error) {
-	return s.roleOps.CheckSurveyPermission(ctx, surveyID, userID, permissionID)
+func (s *RoleService) CheckSurveyPermission(ctx context.Context, surveyID uuid.UUID, userID uuid.UUID) (bool, error) {
+	surveyID
 }
 
 // CheckSurveyPermission checks if a user has a specific permission for a survey.
