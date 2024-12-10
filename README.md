@@ -44,7 +44,7 @@ go run cmd/api/main.go
 
 ## ERD (Entity Relationship Diagram)
 
-click [here](https://dbdiagram.io/d/quera_p2-6744b17ce9daa85acaa836e1) to check the ERD.
-clicl [here](https://restless-star-600413.postman.co/workspace/Quera~3fa01880-1528-4b61-8a86-e910c17ad706/collection/24632383-30a3ba92-d18e-4d5d-aac6-1e9d0c1829e5?action=share&source=copy-link&creator=24632383) to Postman collections. 
+- click [here](https://dbdiagram.io/d/quera_p2-6744b17ce9daa85acaa836e1) to check the ERD.
+- click [here](https://restless-star-600413.postman.co/workspace/Quera~3fa01880-1528-4b61-8a86-e910c17ad706/collection/24632383-30a3ba92-d18e-4d5d-aac6-1e9d0c1829e5?action=share&source=copy-link&creator=24632383) to Postman collections. 
 
 ![quera_p2](https://github.com/user-attachments/assets/991b5261-1193-412c-9812-2d73c34e9821)
